@@ -1,0 +1,2189 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VestHub — Seu Painel de Estudos</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #151820;
+    --surface2: #1c2030;
+    --border: #252a3a;
+    --accent: #6ee7b7;
+    --accent2: #f59e0b;
+    --accent3: #818cf8;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --danger: #f87171;
+    --radius: 14px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* BG decoration */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -200px; right: -200px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(110,231,183,.07) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -200px; left: -100px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(129,140,248,.06) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ─── LAYOUT ─── */
+  .app { display: flex; min-height: 100vh; position: relative; z-index: 1; }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: 240px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 28px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+    margin-bottom: 10px;
+  }
+  .logo span { color: var(--text); }
+
+  .sidebar-section {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 16px 8px 6px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--muted);
+    transition: all .2s;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+  }
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: rgba(110,231,183,.12); color: var(--accent); }
+  .nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+
+  .progress-block {
+    margin-top: auto;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+  }
+  .progress-block .label { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+  .progress-block .val { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; color: var(--accent); }
+  .progress-block .sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .prog-bar { height: 4px; background: var(--border); border-radius: 99px; margin-top: 10px; overflow: hidden; }
+  .prog-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent3)); border-radius: 99px; transition: width .5s ease; }
+
+  /* MAIN */
+  .main { flex: 1; padding: 32px; overflow-y: auto; }
+
+  .page { display: none; animation: fadeIn .3s ease; }
+  .page.active { display: block; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .page-header { margin-bottom: 28px; }
+  .page-header h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  .page-header p { color: var(--muted); font-size: 14px; margin-top: 4px; }
+
+  /* CARDS GRID */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::after {
+    content: '';
+    position: absolute;
+    top: -20px; right: -20px;
+    width: 70px; height: 70px;
+    border-radius: 50%;
+    opacity: .07;
+  }
+  .stat-card:nth-child(1)::after { background: var(--accent); }
+  .stat-card:nth-child(2)::after { background: var(--accent2); }
+  .stat-card:nth-child(3)::after { background: var(--accent3); }
+  .stat-card:nth-child(4)::after { background: var(--danger); }
+  .stat-icon { font-size: 20px; margin-bottom: 10px; }
+  .stat-val { font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800; }
+  .stat-label { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  /* ─── CRONOGRAMA ─── */
+  .week-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .day-col { display: flex; flex-direction: column; gap: 8px; }
+  .day-label {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: center;
+    padding-bottom: 4px;
+  }
+  .day-label.today { color: var(--accent); }
+
+  .session-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all .2s;
+    position: relative;
+    overflow: hidden;
+    min-height: 64px;
+  }
+  .session-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+  }
+  .session-card.ling::before { background: #f59e0b; }
+  .session-card.lit::before  { background: #fb923c; }
+  .session-card.bio::before  { background: #34d399; }
+  .session-card.qui::before  { background: #a78bfa; }
+  .session-card.fis::before  { background: #60a5fa; }
+  .session-card.histbr::before { background: #f87171; }
+  .session-card.histger::before { background: #f43f5e; }
+  .session-card.geo::before  { background: #2dd4bf; }
+  .session-card.ing::before  { background: #f472b6; }
+
+  .topic-item:hover .del-topic-btn { color: var(--muted) !important; }
+  .topic-item:hover .del-topic-btn:hover { color: var(--danger) !important; }
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 14px; font-size: 13px;
+  }
+  .lap-num { color: var(--muted); font-size: 11px; }
+  .lap-time { font-family: 'Syne', sans-serif; font-weight: 700; color: var(--accent3); }
+  .lap-total { font-size: 11px; color: var(--muted); }
+
+  .session-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .session-card.done { opacity: .5; }
+  .session-card.done .sess-subject { text-decoration: line-through; }
+
+  .sess-subject { font-weight: 600; color: var(--text); margin-bottom: 2px; }
+  .sess-topic { color: var(--muted); font-size: 11px; }
+  .sess-time { color: var(--muted); font-size: 10px; margin-top: 4px; display: flex; align-items: center; gap: 3px; }
+
+  .add-session-btn {
+    background: transparent;
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 20px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all .2s;
+    text-align: center;
+    width: 100%;
+    min-height: 44px;
+  }
+  .add-session-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(110,231,183,.04); }
+
+  /* ─── CHECKLIST ─── */
+  .subjects-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+
+  .subject-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .subject-header {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .subject-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .subject-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .subject-pct { font-size: 13px; color: var(--accent); font-weight: 600; }
+
+  .subject-prog { height: 3px; background: var(--border); }
+  .subject-prog-fill { height: 100%; border-radius: 0; transition: width .4s ease; }
+
+  .topic-list { padding: 12px; display: flex; flex-direction: column; gap: 4px; }
+
+  .topic-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background .15s;
+    font-size: 13px;
+  }
+  .topic-item:hover { background: var(--surface2); }
+  .topic-item.checked { color: var(--muted); }
+
+  .checkbox {
+    width: 18px; height: 18px;
+    border: 2px solid var(--border);
+    border-radius: 5px;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .2s;
+    font-size: 11px;
+  }
+  .topic-item.checked .checkbox {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #0d0f14;
+  }
+  .topic-text { flex: 1; }
+  .topic-text.done { text-decoration: line-through; }
+
+  .add-topic-row {
+    display: flex;
+    gap: 8px;
+    padding: 8px 12px 12px;
+  }
+  .topic-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    padding: 7px 12px;
+    outline: none;
+    transition: border .2s;
+  }
+  .topic-input:focus { border-color: var(--accent); }
+  .topic-input::placeholder { color: var(--muted); }
+
+  .btn-sm {
+    background: var(--accent);
+    color: #0d0f14;
+    border: none;
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+    font-family: 'Syne', sans-serif;
+    transition: opacity .2s;
+    white-space: nowrap;
+  }
+  .btn-sm:hover { opacity: .85; }
+
+  /* ─── MODAL ─── */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.6);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px;
+    width: 420px;
+    max-width: 95vw;
+    animation: modalIn .25s ease;
+  }
+  @keyframes modalIn { from { opacity: 0; transform: scale(.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+  .modal h3 { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; margin-bottom: 20px; }
+
+  .form-group { margin-bottom: 16px; }
+  .form-label { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: .8px; text-transform: uppercase; margin-bottom: 6px; display: block; }
+  .form-control {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    padding: 10px 14px;
+    outline: none;
+    transition: border .2s;
+  }
+  .form-control:focus { border-color: var(--accent); }
+
+  .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+  .btn-cancel {
+    flex: 1; padding: 11px; border: 1px solid var(--border); border-radius: 10px;
+    background: transparent; color: var(--muted); font-family: 'Syne', sans-serif;
+    font-weight: 700; font-size: 13px; cursor: pointer; transition: all .2s;
+  }
+  .btn-cancel:hover { border-color: var(--text); color: var(--text); }
+  .btn-confirm {
+    flex: 1; padding: 11px; border: none; border-radius: 10px;
+    background: var(--accent); color: #0d0f14; font-family: 'Syne', sans-serif;
+    font-weight: 700; font-size: 13px; cursor: pointer; transition: opacity .2s;
+  }
+  .btn-confirm:hover { opacity: .85; }
+
+  /* TIMER */
+  .timer-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    text-align: center;
+    max-width: 340px;
+    margin: 0 auto 28px;
+  }
+  .timer-display {
+    font-family: 'Syne', sans-serif;
+    font-size: 64px;
+    font-weight: 800;
+    letter-spacing: -2px;
+    color: var(--accent);
+    line-height: 1;
+    margin: 10px 0;
+    text-shadow: 0 0 40px rgba(110,231,183,.3);
+  }
+  .timer-label { font-size: 12px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+  .timer-btns { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
+  .timer-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 10px 22px;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .timer-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .timer-btn.primary { background: var(--accent); color: #0d0f14; border-color: var(--accent); }
+  .timer-btn.primary:hover { opacity: .85; }
+
+  .pomodoro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; max-width: 340px; margin: 0 auto; }
+  .pom-stat { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; }
+  .pom-val { font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800; color: var(--accent2); }
+  .pom-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 28px; right: 28px;
+    background: var(--surface2);
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    padding: 14px 20px;
+    font-size: 13px;
+    color: var(--text);
+    display: flex; align-items: center; gap: 10px;
+    z-index: 999;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all .3s ease;
+    pointer-events: none;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .main { padding: 20px; }
+    .week-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 600px) {
+    .week-grid { grid-template-columns: 1fr 1fr; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">Vest<span>Hub</span></div>
+
+    <div class="sidebar-section">Menu</div>
+    <button class="nav-item active" onclick="showPage('dashboard', this)">
+      <span class="icon">🏠</span> Dashboard
+    </button>
+    <button class="nav-item" onclick="showPage('cronograma', this)">
+      <span class="icon">📅</span> Cronograma
+    </button>
+    <button class="nav-item" onclick="showPage('checklist', this)">
+      <span class="icon">✅</span> Checklist
+    </button>
+    <button class="nav-item" onclick="showPage('timer', this)">
+      <span class="icon">⏱️</span> Timer Livre
+    </button>
+    <button class="nav-item" onclick="showPage('pomodoro', this)">
+      <span class="icon">🍅</span> Pomodoro
+    </button>
+    <button class="nav-item" onclick="showPage('simulados', this)">
+      <span class="icon">📝</span> Simulados
+    </button>
+    <button class="nav-item" onclick="showPage('graficos', this)">
+      <span class="icon">📊</span> Gráficos
+    </button>
+    <button class="nav-item" onclick="showPage('revisao', this)">
+      <span class="icon">🔔</span> Revisão Espaçada
+    </button>
+    <button class="nav-item" onclick="showPage('conquistas', this)">
+      <span class="icon">🏅</span> Conquistas
+    </button>
+    <button class="nav-item" onclick="showPage('calendario', this)">
+      <span class="icon">🗓️</span> Calendário
+    </button>
+    <button class="nav-item" onclick="exportarExcel()">
+      <span class="icon">📤</span> Exportar Excel
+    </button>
+
+    <div class="progress-block">
+      <div class="label">Progresso Geral</div>
+      <div class="val" id="sb-pct">0%</div>
+      <div class="sub">tópicos concluídos</div>
+      <div class="prog-bar"><div class="prog-fill" id="sb-fill" style="width:0%"></div></div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ── DASHBOARD ── -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <h1>Olá, Vestibulando! 👋</h1>
+        <p>Aqui está um resumo do seu progresso hoje.</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">✅</div>
+          <div class="stat-val" id="dash-done">0</div>
+          <div class="stat-label">Tópicos Concluídos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📚</div>
+          <div class="stat-val" id="dash-total">0</div>
+          <div class="stat-label">Total de Tópicos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">📅</div>
+          <div class="stat-val" id="dash-sessions">0</div>
+          <div class="stat-label">Sessões na Semana</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🍅</div>
+          <div class="stat-val" id="dash-poms">0</div>
+          <div class="stat-label">Pomodoros Feitos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">⏱️</div>
+          <div class="stat-val" id="dash-study-time">0h</div>
+          <div class="stat-label">Estudado Hoje</div>
+        </div>
+      </div>
+
+      <h2 style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:14px;color:var(--muted);">HOJE NA SEMANA</h2>
+      <div id="dash-today" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:28px;"></div>
+
+      <h2 style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:14px;color:var(--muted);">MATÉRIAS</h2>
+      <div id="dash-subjects" style="display:flex;flex-direction:column;gap:10px;"></div>
+    </div>
+
+    <!-- ── CRONOGRAMA ── -->
+    <div class="page" id="page-cronograma">
+      <div class="page-header">
+        <h1>📅 Cronograma Semanal</h1>
+        <p>Organize suas sessões de estudo por dia. Clique num card para marcar como feito.</p>
+      </div>
+      <div class="week-grid" id="week-grid"></div>
+    </div>
+
+    <!-- ── CHECKLIST ── -->
+    <div class="page" id="page-checklist">
+      <div class="page-header">
+        <h1>✅ Checklist de Conteúdo</h1>
+        <p>Marque os tópicos que já estudou por matéria.</p>
+      </div>
+      <div style="position:relative;max-width:420px;margin-bottom:22px;">
+        <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:15px;pointer-events:none;">🔍</span>
+        <input id="topic-search" type="text" placeholder="Buscar tópico em qualquer matéria…"
+          style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:10px 14px 10px 40px;outline:none;transition:border .2s;"
+          onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"
+          oninput="renderChecklist()">
+      </div>
+      <div class="subjects-grid" id="subjects-grid"></div>
+    </div>
+
+    <!-- ── CALENDÁRIO ── -->
+    <div class="page" id="page-calendario">
+      <div class="page-header">
+        <h1>🗓️ Calendário de Estudos</h1>
+        <p>Veja o que você estudou em cada dia.</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:22px;">
+        <button onclick="calPrev()" class="timer-btn" style="padding:8px 16px;">‹</button>
+        <div id="cal-title" style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;flex:1;text-align:center;"></div>
+        <button onclick="calNext()" class="timer-btn" style="padding:8px 16px;">›</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px;" id="cal-weekdays"></div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;" id="cal-grid"></div>
+      <div id="cal-detail" style="margin-top:20px;"></div>
+    </div>
+
+    <!-- ── TIMER LIVRE ── -->
+    <div class="page" id="page-timer">
+      <div class="page-header">
+        <h1>⏱️ Timer Livre</h1>
+        <p>Cronômetro de tempo corrido com registro diário de sessões.</p>
+      </div>
+
+      <!-- META DO DIA -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;max-width:760px;margin-bottom:20px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div>
+            <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;">META DIÁRIA</div>
+            <div style="display:flex;align-items:baseline;gap:6px;margin-top:4px;">
+              <span id="goal-today-h" style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--accent3);">0h 00min</span>
+              <span style="color:var(--muted);font-size:13px;">/ 5h 00min</span>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <div id="goal-pct-label" style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--accent);">0%</div>
+            <div style="font-size:11px;color:var(--muted);">da meta</div>
+          </div>
+        </div>
+        <div style="height:8px;background:var(--border);border-radius:99px;overflow:hidden;">
+          <div id="goal-bar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--accent3),var(--accent));border-radius:99px;transition:width .5s ease;"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;">
+          <span style="font-size:11px;color:var(--muted);" id="goal-date-label">Hoje</span>
+          <span style="font-size:11px;color:var(--muted);">Meta: <span id="goal-target-edit" style="cursor:pointer;text-decoration:underline;color:var(--accent3);" onclick="editGoal()" title="Clique para alterar">5h</span></span>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:760px;margin-bottom:20px;">
+        <!-- CRONÔMETRO -->
+        <div class="timer-block" style="margin:0;">
+          <div class="timer-label" id="sw-label">CRONÔMETRO</div>
+          <div class="timer-display" id="sw-display" style="color:var(--accent3);text-shadow:0 0 40px rgba(129,140,248,.3);font-size:52px;">00:00:00</div>
+          <div class="timer-label" id="sw-sub" style="margin-top:4px;">Pronto para começar</div>
+          <div style="margin-top:12px;margin-bottom:8px;">
+            <label style="font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.8px;text-transform:uppercase;display:block;margin-bottom:6px;">Matéria estudada</label>
+            <select id="sw-subject" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:7px 10px;outline:none;">
+              <option value="">— selecione —</option>
+            </select>
+          </div>
+          <div class="timer-btns" style="flex-wrap:wrap;margin-top:8px;">
+            <button class="timer-btn" onclick="swReset()">↺ Zerar</button>
+            <button class="timer-btn" onclick="swLap()">⬥ Lap</button>
+            <button class="timer-btn primary" id="sw-toggle" onclick="swToggle()">▶ Iniciar</button>
+          </div>
+          <button onclick="swFinishSession()" style="margin-top:10px;width:100%;background:rgba(110,231,183,.1);border:1px solid var(--accent);border-radius:8px;color:var(--accent);font-family:'Syne',sans-serif;font-size:12px;font-weight:700;padding:9px;cursor:pointer;transition:all .2s;" onmouseover="this.style.background='rgba(110,231,183,.2)'" onmouseout="this.style.background='rgba(110,231,183,.1)'">✔ Finalizar & Avaliar Sessão</button>
+        </div>
+
+        <!-- LAPS -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;display:flex;flex-direction:column;gap:8px;">
+          <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);">LAPS</div>
+          <div id="sw-laps" style="display:flex;flex-direction:column;gap:6px;flex:1;overflow-y:auto;max-height:220px;"></div>
+        </div>
+      </div>
+
+      <!-- HISTÓRICO DE SESSÕES -->
+      <div style="max-width:760px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);">HISTÓRICO DE SESSÕES</div>
+          <button onclick="clearSessions()" style="background:transparent;border:none;color:var(--muted);font-size:11px;cursor:pointer;font-family:'Syne',sans-serif;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--muted)'">Limpar histórico</button>
+        </div>
+        <div id="sessions-log" style="display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+    </div>
+
+    <!-- ── POMODORO ── -->
+    <div class="page" id="page-pomodoro">
+      <div class="page-header">
+        <h1>⏱️ Timer Pomodoro</h1>
+        <p>25 min de foco + 5 min de pausa. Sua arma secreta!</p>
+      </div>
+
+      <div class="timer-block">
+        <div class="timer-label" id="timer-mode">FOCO</div>
+        <div class="timer-display" id="timer-display">25:00</div>
+        <div class="timer-label" id="timer-sub">Prepare-se para estudar</div>
+        <div class="timer-btns">
+          <button class="timer-btn" onclick="resetTimer()">↺ Reset</button>
+          <button class="timer-btn primary" id="timer-toggle" onclick="toggleTimer()">▶ Iniciar</button>
+        </div>
+      </div>
+
+      <div class="pomodoro-grid">
+        <div class="pom-stat">
+          <div class="pom-val" id="pom-count">0</div>
+          <div class="pom-label">Pomodoros Hoje</div>
+        </div>
+        <div class="pom-stat">
+          <div class="pom-val" id="pom-mins">0</div>
+          <div class="pom-label">Minutos Focados</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SIMULADOS ── -->
+    <div class="page" id="page-simulados">
+      <div class="page-header">
+        <h1>📝 Tracker de Simulados</h1>
+        <p>Registre suas notas e acompanhe sua evolução por banca.</p>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px;" id="sim-banca-tabs"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);" id="sim-banca-label">Todos</div>
+        <button onclick="openSimModal()" class="btn-sm">+ Novo Simulado</button>
+      </div>
+      <div id="sim-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+    </div>
+
+    <!-- ── GRÁFICOS ── -->
+    <div class="page" id="page-graficos">
+      <div class="page-header">
+        <h1>📊 Gráficos</h1>
+        <p>Visualize suas horas de estudo e evolução nos simulados.</p>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:900px;" id="charts-grid">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;">
+          <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;">HORAS ESTUDADAS — ÚLTIMOS 7 DIAS</div>
+          <canvas id="chart-hours" height="180"></canvas>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;">
+          <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;">TÓPICOS POR MATÉRIA</div>
+          <canvas id="chart-topics" height="180"></canvas>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;grid-column:1/-1;">
+          <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;">EVOLUÇÃO NOS SIMULADOS</div>
+          <canvas id="chart-sims" height="140"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── REVISÃO ESPAÇADA ── -->
+    <div class="page" id="page-revisao">
+      <div class="page-header">
+        <h1>🔔 Revisão Espaçada</h1>
+        <p>Tópicos que você precisa revisar hoje baseado no intervalo 1 → 7 → 30 dias.</p>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px;" id="rev-stats"></div>
+      <div id="rev-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+      <div style="margin-top:24px;padding:16px 20px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);font-size:13px;color:var(--muted);">
+        💡 Os tópicos marcados como concluídos no <strong>Checklist</strong> entram automaticamente na fila de revisão espaçada.
+      </div>
+    </div>
+
+    <!-- ── CONQUISTAS ── -->
+    <div class="page" id="page-conquistas">
+      <div class="page-header">
+        <h1>🏅 Conquistas</h1>
+        <p>Badges desbloqueados pelo seu esforço.</p>
+      </div>
+      <div id="badges-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODAL NOVO SIMULADO -->
+<div class="modal-overlay" id="sim-modal">
+  <div class="modal" style="max-width:500px;">
+    <h3>📝 Registrar Simulado</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label">Banca</label>
+        <select class="form-control" id="sim-banca">
+          <option value="ENEM">ENEM</option>
+          <option value="FUVEST">FUVEST</option>
+          <option value="UNESP">UNESP</option>
+          <option value="UNICAMP">UNICAMP</option>
+          <option value="UNIFESP">UNIFESP</option>
+          <option value="FAMERP">FAMERP</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label">Data</label>
+        <input class="form-control" id="sim-date" type="date">
+      </div>
+    </div>
+    <div style="margin-top:14px;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">NOTAS POR ÁREA (0–10 ou 0–1000 p/ ENEM)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;" id="sim-scores-grid">
+      <div><label class="form-label">Matemática</label><input class="form-control" id="ssc-mat" type="number" min="0" placeholder="—"></div>
+      <div><label class="form-label">Linguagens</label><input class="form-control" id="ssc-ling" type="number" min="0" placeholder="—"></div>
+      <div><label class="form-label">Ciências da Natureza</label><input class="form-control" id="ssc-cien" type="number" min="0" placeholder="—"></div>
+      <div><label class="form-label">Ciências Humanas</label><input class="form-control" id="ssc-hum" type="number" min="0" placeholder="—"></div>
+      <div><label class="form-label">Redação</label><input class="form-control" id="ssc-red" type="number" min="0" placeholder="—"></div>
+      <div><label class="form-label">Nota Total / Geral</label><input class="form-control" id="ssc-total" type="number" min="0" placeholder="—"></div>
+    </div>
+    <div class="form-group" style="margin-top:14px;">
+      <label class="form-label">Observações</label>
+      <textarea class="form-control" id="sim-obs" placeholder="Ex: Travei em Física, redação boa…" style="resize:vertical;min-height:56px;"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeSimModal()">Cancelar</button>
+      <button class="btn-confirm" onclick="saveSim()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ADICIONAR SESSÃO -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <h3>➕ Nova Sessão de Estudo</h3>
+    <div class="form-group">
+      <label class="form-label">Matéria</label>
+      <select class="form-control" id="m-subject">
+        <option value="mat">Matemática</option>
+        <option value="ling">Linguagens</option>
+        <option value="lit">Literatura</option>
+        <option value="bio">Biologia</option>
+        <option value="qui">Química</option>
+        <option value="fis">Física</option>
+        <option value="histbr">História do Brasil</option>
+        <option value="histger">História Geral</option>
+        <option value="geo">Geografia</option>
+        <option value="ing">Inglês</option>
+        <option value="socfil">Sociologia/Filosofia</option>
+        <option value="atual">Atualidades</option>
+        <option value="arte">Arte</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tópico</label>
+      <input class="form-control" id="m-topic" placeholder="Ex: Funções do 2º grau">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Horário</label>
+      <input class="form-control" id="m-time" placeholder="Ex: 14h – 16h" type="text">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-confirm" onclick="addSession()">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NOVA MATÉRIA -->
+<div class="modal-overlay" id="subj-modal">
+  <div class="modal">
+    <h3>📚 Nova Matéria</h3>
+    <div class="form-group">
+      <label class="form-label">Nome da Matéria</label>
+      <input class="form-control" id="subj-name" placeholder="Ex: Inglês, Redação…" onkeydown="if(event.key==='Enter')addSubject()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Cor</label>
+      <input class="form-control" id="subj-color" type="color" value="#6ee7b7" style="height:44px;padding:4px 8px;cursor:pointer;">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeSubjectModal()">Cancelar</button>
+      <button class="btn-confirm" onclick="addSubject()">Criar Matéria</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL AVALIAÇÃO DE SESSÃO -->
+<div class="modal-overlay" id="rating-modal">
+  <div class="modal" style="max-width:500px;max-height:90vh;overflow-y:auto;">
+    <h3>⭐ Como foi essa sessão?</h3>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:20px;">Avalie seu desempenho e marque os tópicos que estudou.</div>
+
+    <!-- Tópicos estudados -->
+    <div style="margin-bottom:18px;">
+      <label style="font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.8px;text-transform:uppercase;display:block;margin-bottom:8px;">TÓPICOS ESTUDADOS NESSA SESSÃO</label>
+      <div id="session-topics-list" style="display:flex;flex-direction:column;gap:4px;max-height:180px;overflow-y:auto;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px;"></div>
+    </div>
+
+    <div style="margin-bottom:18px;">
+      <label style="font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.8px;text-transform:uppercase;display:block;margin-bottom:10px;">NOTA (1–10)</label>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;" id="rating-stars"></div>
+      <div id="rating-desc" style="margin-top:10px;font-size:13px;color:var(--accent);font-family:'Syne',sans-serif;font-weight:700;min-height:20px;"></div>
+    </div>
+    <div style="margin-bottom:18px;">
+      <label style="font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.8px;text-transform:uppercase;display:block;margin-bottom:6px;">ANOTAÇÃO (opcional)</label>
+      <textarea id="rating-note" placeholder="Ex: Foco ótimo, mas travei em Trigonometria…" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:10px 14px;outline:none;resize:vertical;min-height:72px;transition:border .2s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+    </div>
+    <div style="background:var(--surface2);border-radius:10px;padding:12px 16px;margin-bottom:18px;font-size:12px;color:var(--muted);" id="rating-summary"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeRatingModal()">Pular</button>
+      <button class="btn-confirm" onclick="saveRating()">Salvar Sessão</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR META -->
+<div class="modal-overlay" id="goal-modal">
+  <div class="modal" style="max-width:360px;">
+    <h3>🎯 Meta Diária</h3>
+    <div class="form-group">
+      <label class="form-label">Horas de estudo por dia</label>
+      <input class="form-control" id="goal-input" type="number" min="1" max="16" value="5" step="0.5">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="document.getElementById('goal-modal').classList.remove('open')">Cancelar</button>
+      <button class="btn-confirm" onclick="saveGoal()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">🎉 Ação realizada!</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// ─── DADOS INICIAIS ───────────────────────────────────
+const DAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+const TODAY = new Date().getDay();
+
+let COLORS = {
+  mat:'#6ee7b7', ling:'#f59e0b', lit:'#fb923c',
+  bio:'#34d399', qui:'#a78bfa', fis:'#60a5fa',
+  histbr:'#f87171', histger:'#f43f5e',
+  geo:'#2dd4bf', ing:'#f472b6',
+  socfil:'#c084fc', atual:'#38bdf8', arte:'#f9a8d4'
+};
+let NAMES = {
+  mat:'Matemática', ling:'Linguagens', lit:'Literatura',
+  bio:'Biologia', qui:'Química', fis:'Física',
+  histbr:'História do Brasil', histger:'História Geral',
+  geo:'Geografia', ing:'Inglês',
+  socfil:'Sociologia/Filosofia', atual:'Atualidades', arte:'Arte'
+};
+
+let state = {"sessions":[{"id":1,"day":1,"subject":"mat","topic":"Matemática 1","time":"50min","done":false},{"id":2,"day":1,"subject":"mat","topic":"Questões/Flashcards","time":"40min","done":false},{"id":3,"day":1,"subject":"geo","topic":"Geografia 1","time":"50min","done":false},{"id":4,"day":1,"subject":"geo","topic":"Questões/Flashcards","time":"40min","done":false},{"id":5,"day":1,"subject":"fis","topic":"Física 1","time":"50min","done":false},{"id":6,"day":1,"subject":"fis","topic":"Questões/Flashcards","time":"40min","done":false},{"id":7,"day":1,"subject":"lit","topic":"Literatura","time":"50min","done":false},{"id":8,"day":1,"subject":"lit","topic":"Questões/Flashcards","time":"40min","done":false},{"id":9,"day":2,"subject":"fis","topic":"Física 2","time":"50min","done":false},{"id":10,"day":2,"subject":"fis","topic":"Questões/Flashcards","time":"40min","done":false},{"id":11,"day":2,"subject":"histger","topic":"História Geral","time":"50min","done":false},{"id":12,"day":2,"subject":"histger","topic":"Questões/Flashcards","time":"40min","done":false},{"id":13,"day":2,"subject":"mat","topic":"Matemática 2","time":"50min","done":false},{"id":14,"day":2,"subject":"mat","topic":"Questões/Flashcards","time":"40min","done":false},{"id":15,"day":2,"subject":"ling","topic":"Linguagens","time":"50min","done":false},{"id":16,"day":2,"subject":"ling","topic":"Questões/Flashcards","time":"40min","done":false},{"id":17,"day":3,"subject":"bio","topic":"Biologia 1","time":"50min","done":false},{"id":18,"day":3,"subject":"bio","topic":"Questões/Flashcards","time":"40min","done":false},{"id":19,"day":3,"subject":"histbr","topic":"História do Brasil","time":"50min","done":false},{"id":20,"day":3,"subject":"histbr","topic":"Questões/Flashcards","time":"40min","done":false},{"id":21,"day":3,"subject":"qui","topic":"Química 1","time":"50min","done":false},{"id":22,"day":3,"subject":"qui","topic":"Questões/Flashcards","time":"40min","done":false},{"id":23,"day":3,"subject":"geo","topic":"Geografia 2","time":"50min","done":false},{"id":24,"day":3,"subject":"geo","topic":"Questões/Flashcards","time":"40min","done":false},{"id":25,"day":4,"subject":"mat","topic":"Matemática 3","time":"50min","done":false},{"id":26,"day":4,"subject":"mat","topic":"Questões/Flashcards","time":"40min","done":false},{"id":27,"day":4,"subject":"fis","topic":"Física 3","time":"50min","done":false},{"id":28,"day":4,"subject":"fis","topic":"Questões/Flashcards","time":"40min","done":false},{"id":29,"day":4,"subject":"ling","topic":"Filosofia/Sociologia","time":"50min","done":false},{"id":30,"day":4,"subject":"ling","topic":"Questões/Flashcards","time":"40min","done":false},{"id":31,"day":4,"subject":"qui","topic":"Química 2","time":"50min","done":false},{"id":32,"day":4,"subject":"qui","topic":"Questões/Flashcards","time":"40min","done":false},{"id":33,"day":5,"subject":"bio","topic":"Biologia 2","time":"50min","done":false},{"id":34,"day":5,"subject":"bio","topic":"Questões/Flashcards","time":"40min","done":false},{"id":35,"day":5,"subject":"qui","topic":"Química 3","time":"50min","done":false},{"id":36,"day":5,"subject":"qui","topic":"Questões/Flashcards","time":"40min","done":false},{"id":37,"day":5,"subject":"bio","topic":"Biologia 3","time":"50min","done":false},{"id":38,"day":5,"subject":"bio","topic":"Questões/Flashcards","time":"40min","done":false},{"id":39,"day":6,"subject":"ling","topic":"Atualidades","time":"50min","done":false},{"id":40,"day":6,"subject":"ling","topic":"Redação","time":"50min","done":false},{"id":41,"day":6,"subject":"ling","topic":"Redação (2ª sessão)","time":"40min","done":false}],"topics":{"mat":[{"id":"m_conj","text":"Teoria dos Conjuntos","done":true},{"id":"m_porc","text":"Porcentagem","done":true},{"id":"m_disc","text":"Questões Discursivas","done":true},{"id":"m_func1","text":"Funções do 1º grau","done":false},{"id":"m_func2","text":"Funções do 2º grau","done":false},{"id":"m_trig","text":"Trigonometria","done":false},{"id":"m_geop","text":"Geometria Plana","done":true},{"id":"m_prob","text":"Probabilidade","done":false},{"id":"m_stat","text":"Estatística","done":false},{"id":"mat1772749804874","text":"Operações com intervalos reais","done":false},{"id":"mat1772749815391","text":"Potenciação","done":true},{"id":"mat1772749820187","text":"Radiciação","done":true},{"id":"mat1772749833389","text":"Equações do 1° Grau","done":true},{"id":"mat1772749856109","text":"Equações do 2° Grau","done":true},{"id":"mat1772749874890","text":"Relações, funções e definições","done":false},{"id":"mat1772749906973","text":"Produtos Notáveis e Fatoração","done":true},{"id":"mat1772749917495","text":"M.M.C e M.D.C","done":true},{"id":"mat1772749954516","text":"Razão, Proporção e Grandezas Proporcionais","done":true},{"id":"mat1772749993211","text":"Acréscimos e Descontos","done":false},{"id":"mat1772750000603","text":"Juros Simples e Compostos","done":false},{"id":"mat1772750044532","text":"Ângulos no Triângulo","done":true},{"id":"mat1772750052244","text":"Circunferência","done":true},{"id":"mat1772750064382","text":"Produtos Notáveis no Triângulo","done":false},{"id":"mat1772750078954","text":"Teorema de Tales e Semelhança","done":false},{"id":"mat1772750093881","text":"Relações Métricas no Triângulo Retângulo","done":false},{"id":"mat1772750111517","text":"Trigonometria em um Triângulo Retângulo","done":false}],"ling":[{"id":"l_ling","text":"Linguagens (aula)","done":true},{"id":"l_interp","text":"Interpretação de Texto","done":false},{"id":"l_gram","text":"Gramática — Concordância","done":false},{"id":"l_fig","text":"Figuras de Linguagem","done":false},{"id":"l_red","text":"Redação Dissertativa","done":false},{"id":"l_var","text":"Variação Linguística","done":false},{"id":"l_filsoc","text":"Filosofia/Sociologia","done":false},{"id":"l_atual","text":"Atualidades","done":false},{"id":"ling1772750932087","text":"Tipologias Textuais","done":true},{"id":"ling1772750957672","text":"Funções da Linguagem","done":false},{"id":"ling1772750977575","text":"Norma-Padrão e Variação Linguística","done":false},{"id":"ling1772750986113","text":"Semântica","done":false},{"id":"ling1772751004143","text":"Estudo de Verbos I: Tempos e Modos","done":false},{"id":"ling1772751015828","text":"Estudo de Verbos II: Vozes Verbais","done":false},{"id":"ling1772751029146","text":"Estudo de Verbos III: Discurso","done":false}],"lit":[{"id":"lt_lit","text":"Literatura (aula geral)","done":true},{"id":"lt_trov","text":"Trovadorismo e Humanismo","done":true},{"id":"lt_clas","text":"Classicismo","done":false},{"id":"lt_bar","text":"Barroco e Arcadismo","done":false},{"id":"lt_rom","text":"Romantismo","done":false},{"id":"lt_real","text":"Realismo e Naturalismo","done":false},{"id":"lt_mod","text":"Modernismo","done":false},{"id":"lit1772751070752","text":"A Arte Literária e o Estudo dos Gêneros","done":false},{"id":"lit1772751084337","text":"Quinhentismo e Barroco","done":false},{"id":"lit1772751105182","text":"Gregório de Matos e Padre Antônio Vieira","done":false},{"id":"lit1772751110162","text":"Arcadismo","done":false},{"id":"lit1772751117049","text":"Romantismo em Portugal","done":false}],"bio":[{"id":"b_deolho","text":"De Olho no Enem — Biologia","done":true},{"id":"b_eco","text":"Introdução à Ecologia e Relações Tróficas","done":true},{"id":"b_cito","text":"Citologia","done":false},{"id":"b_gen","text":"Genética","done":false},{"id":"b_evol","text":"Evolução","done":false},{"id":"b_fisiol","text":"Fisiologia Humana","done":false},{"id":"bio1772751840718","text":"Origem da Vida","done":true},{"id":"bio1772751849078","text":"Evidências Evolutivas","done":true},{"id":"bio1772751856526","text":"Teorias Evolutivas","done":true},{"id":"bio1772751862964","text":"Especiação","done":true},{"id":"bio1772751880056","text":"Relações Ecológicas","done":false},{"id":"bio1772751893138","text":"Ecologia de Populações e Sucessão Ecológica","done":false},{"id":"bio1772751917111","text":"Taxonomia e Sistemática Filogenética","done":true},{"id":"bio1772751921713","text":"Protistas","done":true},{"id":"bio1772751929008","text":"Protozooses","done":true},{"id":"bio1772751935780","text":"Embriologia I","done":true},{"id":"bio1772751946341","text":"Embriologia II","done":false},{"id":"bio1772751961001","text":"Reino Animalia I - Porífera e Cnidária","done":false},{"id":"bio1772753179805","text":"Reino Animalia II - Platelmintos e Verminoses","done":false},{"id":"bio1772753234024","text":"Composição Química Celular I - Compostos Inorgânicos","done":true},{"id":"bio1772753261068","text":"Composição Química Celular II - Compostos Orgânicos I","done":true},{"id":"bio1772753292516","text":"Composição Química Celular II - Compostos Orgânicos II","done":false},{"id":"bio1772753305971","text":"Citologia - Modelos Celulares","done":false},{"id":"bio1772753314351","text":"Citologia - Membranas","done":false},{"id":"bio1772753343799","text":"Citologia - Organelas Citoplasmáticas","done":false},{"id":"bio1772753358473","text":"Citologia - Metabolismo Energértico I","done":false}],"qui":[{"id":"q_deolho","text":"De Olho no Enem — Química","done":true},{"id":"q_hidro","text":"Hidrocarbonetos I","done":true},{"id":"q_reac","text":"Reações Químicas","done":false},{"id":"q_org","text":"Química Orgânica","done":false},{"id":"q_termo","text":"Termoquímica","done":false},{"id":"q_equil","text":"Equilíbrio Químico","done":false},{"id":"q_elet","text":"Eletroquímica","done":false},{"id":"qui1772751526355","text":"Propriedades e Estado Físico da Matéria","done":true},{"id":"qui1772751542478","text":"Métodos de Separação de Misturas I","done":true},{"id":"qui1772751552132","text":"Métodos de Separação de Misturas II","done":true},{"id":"qui1772751562751","text":"Métodos de Separação de Misturas III","done":false},{"id":"qui1772751576231","text":"Modelos Atômicos","done":true},{"id":"qui1772751597367","text":"Atomística","done":false},{"id":"qui1772751612675","text":"Classificação Periódica dos Elementos","done":false},{"id":"qui1772751632526","text":"Propriedades Periódicas e Aperiódicas","done":false},{"id":"qui1772751658365","text":"Relações Numéricas","done":true},{"id":"qui1772751667360","text":"Estudo dos Gases","done":true},{"id":"qui1772751678147","text":"Cálculo de Fórmulas","done":true},{"id":"qui1772751688485","text":"Leis Ponderais","done":false},{"id":"qui1772751698543","text":"Estequiometria Simples","done":false},{"id":"qui1772751715167","text":"Estequiometria: Pureza e Rendimento","done":false},{"id":"qui1772751737228","text":"Estequiometria: Reagente Limitante e Excesso","done":false},{"id":"qui1772751753022","text":"Estudo do Carbono","done":true},{"id":"qui1772751766254","text":"Fórmulas na Química Orgânica","done":true},{"id":"qui1772751783397","text":"Classificação das Cadeias Carbônicas","done":true},{"id":"qui1772751794141","text":"Hidrocarbonetos II","done":false},{"id":"qui1772751803522","text":"Funções Oxigenadas I","done":false},{"id":"qui1772751810650","text":"Funções Oxigenadas II","done":false}],"fis":[{"id":"f_un","text":"Física — Revisão UN","done":true},{"id":"f_campo","text":"Campo Elétrico","done":true},{"id":"f_newt","text":"Leis de Newton","done":false},{"id":"f_termo","text":"Termodinâmica","done":false},{"id":"f_otica","text":"Óptica","done":false},{"id":"f_eletmag","text":"Eletromagnetismo","done":false},{"id":"f_ond","text":"Ondulatória","done":false},{"id":"fis1772751230382","text":"Fundamentos da Cinemática Escalar","done":true},{"id":"fis1772751237430","text":"Movimento Uniforme","done":true},{"id":"fis1772751252745","text":"Movimento Uniformemente Variado","done":true},{"id":"fis1772751277301","text":"Queda Livre e Lançamento Vertical","done":true},{"id":"fis1772751291262","text":"Lançamentos Horizontal e Oblíquo","done":true},{"id":"fis1772751302591","text":"Cinemática Vetorial","done":false},{"id":"fis1772751311330","text":"Movimento Circular","done":false},{"id":"fis1772751330183","text":"Grandezas Físicas","done":true},{"id":"fis1772751339609","text":"Temperatura e Calor","done":true},{"id":"fis1772751354008","text":"Calor Sensível","done":true},{"id":"fis1772751367159","text":"Mudanças de Estado Físico","done":true},{"id":"fis1772751380751","text":"Transmissão de Calor","done":false},{"id":"fis1772751388474","text":"Dilatação Térmica","done":false},{"id":"fis1772751392017","text":"Gases","done":false},{"id":"fis1772751418950","text":"Vetores","done":true},{"id":"fis1772751430904","text":"Princípios da Eletrostática","done":true},{"id":"fis1772751437630","text":"Lei de Coulumb","done":true},{"id":"fis1772751459985","text":"Energia Potencial e Potencial Elétrico","done":false},{"id":"fis1772751477503","text":"Trabalho da Força Elétrica","done":false},{"id":"fis1772751490652","text":"Campo Elétrico Uniforme (CEU)","done":false}],"histbr":[{"id":"hb_exp","text":"Expansão Territorial e Mineração","done":true},{"id":"hb_aula","text":"História do Brasil (aula)","done":true},{"id":"hb_col","text":"Brasil Colônia","done":false},{"id":"hb_imp","text":"Independência e Império","done":false},{"id":"hb_var","text":"Era Vargas","done":false},{"id":"hb_dit","text":"Ditadura Militar","done":false},{"id":"hb_red","text":"Redemocratização","done":false},{"id":"histbr1772750172623","text":"Formação de Portugal e Navegações Ultramarinas","done":true},{"id":"histbr1772750189236","text":"Início da Colinização na América","done":true},{"id":"histbr1772750219537","text":"Economia Colonial e o Processo de Escravização","done":true},{"id":"histbr1772750236369","text":"União Ibérica e as Invasões Estrangeiras","done":true},{"id":"histbr1772750250427","text":"Expansão Territorial e Mineração","done":true},{"id":"histbr1772750273495","text":"Revoltas Nativistas e Emancipacionistas","done":false},{"id":"histbr1772750280042","text":"Período Joanino","done":false}],"histger":[{"id":"hg_roma","text":"Roma Antiga — Império","done":true},{"id":"hg_germ","text":"Reinos Germânicos e Alta Idade Média","done":true},{"id":"hg_rev","text":"Revoluções Francesa e Industrial","done":false},{"id":"hg_imper","text":"Imperialismo e 1ª Guerra","done":false},{"id":"hg_2gm","text":"2ª Guerra Mundial","done":false},{"id":"hg_fria","text":"Guerra Fria","done":false},{"id":"hg_glob","text":"Globalização","done":false},{"id":"histger1772750345971","text":"Antiguidade Oriental","done":true},{"id":"histger1772750356793","text":"Civilização Grega","done":true},{"id":"histger1772750385819","text":"Roma Antiga - Monarquia e República","done":true},{"id":"histger1772750412254","text":"Medievo - Expansão Islâmica e Baixa Idade Média","done":false},{"id":"histger1772750428732","text":"Renascimentos Cultural e Científico","done":false}],"geo":[{"id":"g_elem","text":"Elementos e Fatores Climáticos","done":true},{"id":"g_nova","text":"Nova Ordem Mundial","done":true},{"id":"g_geo3","text":"Geopolítica Mundial","done":false},{"id":"g_urb","text":"Urbanização","done":false},{"id":"g_bra","text":"Geopolítica Brasileira","done":false},{"id":"geo1772750459913","text":"Movimentos da Terra","done":true},{"id":"geo1772750469911","text":"Coordenadas Geográficas","done":true},{"id":"geo1772750512492","text":"Noções de Cartografia","done":true},{"id":"geo1772750530354","text":"Dinâmicas Climáticas","done":false},{"id":"geo1772750539846","text":"Climas do Brasil e do Mundo","done":false},{"id":"geo1772750544447","text":"Hidrologia","done":false},{"id":"geo1772750566634","text":"História do Pensamento Geográfico","done":false},{"id":"geo1772750575442","text":"Ordem da Guerra Fria","done":false},{"id":"geo1772750598691","text":"Globalização","done":false},{"id":"geo1772750611565","text":"Blocos Econômicos","done":false},{"id":"geo1772750620214","text":"Comércio Internacional","done":false},{"id":"geo1772750632020","text":"População - Conceitos e Transição","done":false}],"ing":[{"id":"i1","text":"Simple Past / Present Perfect","done":false},{"id":"i2","text":"Phrasal Verbs","done":false},{"id":"i3","text":"Vocabulário Temático","done":false}],"socfil":[{"id":"sf1","text":"O que é Filosofia?","done":false},{"id":"sf2","text":"Filosofia Antiga — Sócrates, Platão, Aristóteles","done":false},{"id":"sf3","text":"Filosofia Moderna — Iluminismo","done":false},{"id":"sf4","text":"O que é Sociologia?","done":false},{"id":"sf5","text":"Sociologia Clássica — Durkheim, Weber, Marx","done":false},{"id":"sf6","text":"Cidadania e Direitos Humanos","done":false},{"id":"sf7","text":"Cultura, Indústria Cultural e Meios de Comunicação","done":false}],"atual":[{"id":"at1","text":"Política Nacional","done":false},{"id":"at2","text":"Economia Brasileira","done":false},{"id":"at3","text":"Relações Internacionais","done":false},{"id":"at4","text":"Meio Ambiente e Sustentabilidade","done":false},{"id":"at5","text":"Ciência e Tecnologia","done":false},{"id":"at6","text":"Saúde e Questões Sociais","done":false}],"arte":[{"id":"ar1","text":"História da Arte — Pré-história ao Renascimento","done":false},{"id":"ar2","text":"Arte Barroca e Neoclássica","done":false},{"id":"ar3","text":"Arte Moderna e Vanguardas","done":false},{"id":"ar4","text":"Arte Contemporânea","done":false},{"id":"ar5","text":"Arte Brasileira","done":false},{"id":"ar6","text":"Linguagens Artísticas: Teatro, Dança, Música","done":false}]},"pomCount":0,"pomMins":0,"nextId":300};
+
+let addingDay = null;
+
+// ─── LOAD/SAVE ────────────────────────────────────────
+function save() {
+  try {
+    const toSave = Object.assign({}, state, { customSubjects: state.customSubjects || [] });
+    localStorage.setItem('vesthub', JSON.stringify(toSave));
+  } catch(e){}
+}
+function load() {
+  try {
+    const s = localStorage.getItem('vesthub');
+    if (s) {
+      const saved = JSON.parse(s);
+      // Merge: keep saved data but add any new subjects not yet in saved
+      state.sessions = saved.sessions ?? state.sessions;
+      state.pomCount = saved.pomCount ?? 0;
+      state.pomMins  = saved.pomMins  ?? 0;
+      state.nextId   = saved.nextId   ?? 300;
+      // Merge topics: keep saved topics, add new subjects if missing
+      if (saved.topics) {
+        Object.keys(saved.topics).forEach(k => { state.topics[k] = saved.topics[k]; });
+      }
+      // Sync COLORS/NAMES from saved custom subjects
+      if (saved.customSubjects) {
+        saved.customSubjects.forEach(cs => {
+          COLORS[cs.key] = cs.color;
+          NAMES[cs.key]  = cs.name;
+          if (!state.topics[cs.key]) state.topics[cs.key] = [];
+        });
+        state.customSubjects = saved.customSubjects;
+      }
+    }
+  } catch(e){}
+}
+
+// ─── NAVIGATION ──────────────────────────────────────
+function showPage(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (id === 'dashboard') renderDashboard();
+  if (id === 'cronograma') renderCronograma();
+  if (id === 'checklist') renderChecklist();
+  if (id === 'timer') { swRenderLaps(); updateGoalBar(); renderSessionLog(); populateSwSubjects(); }
+  if (id === 'simulados' && typeof renderSimulados==='function') renderSimulados();
+  if (id === 'graficos') setTimeout(()=>{ if(typeof renderCharts==='function') renderCharts(); }, 50);
+  if (id === 'revisao' && typeof renderRevisao==='function') renderRevisao();
+  if (id === 'conquistas' && typeof renderConquistas==='function') { checkConquistas(); renderConquistas(); }
+  if (id === 'calendario' && typeof renderCalendario==='function') renderCalendario();
+}
+
+// ─── CRONOGRAMA ──────────────────────────────────────
+function renderCronograma() {
+  const grid = document.getElementById('week-grid');
+  grid.innerHTML = '';
+  DAYS.forEach((day, di) => {
+    const col = document.createElement('div');
+    col.className = 'day-col';
+    const lbl = document.createElement('div');
+    lbl.className = 'day-label' + (di === TODAY ? ' today' : '');
+    lbl.textContent = day;
+    col.appendChild(lbl);
+
+    const daySessions = state.sessions.filter(s => s.day === di);
+    daySessions.forEach(s => {
+      const card = document.createElement('div');
+      card.className = `session-card ${s.subject}` + (s.done ? ' done' : '');
+      card.innerHTML = `<div class="sess-subject">${NAMES[s.subject]||s.subject}</div>
+        <div class="sess-topic">${s.topic}</div>
+        <div class="sess-time">🕐 ${s.time}</div>`;
+      card.onclick = () => toggleSession(s.id);
+      col.appendChild(card);
+    });
+
+    const addBtn = document.createElement('button');
+    addBtn.className = 'add-session-btn';
+    addBtn.textContent = '+';
+    addBtn.title = 'Adicionar sessão';
+    addBtn.onclick = () => openModal(di);
+    col.appendChild(addBtn);
+    grid.appendChild(col);
+  });
+}
+
+function toggleSession(id) {
+  const s = state.sessions.find(s => s.id === id);
+  if (s) { s.done = !s.done; save(); renderCronograma(); updateSidebar(); showToast(s.done ? '✅ Sessão concluída!' : '↩️ Sessão reaberta'); }
+}
+
+function openModal(day) {
+  addingDay = day;
+  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('m-topic').value = '';
+  document.getElementById('m-time').value = '';
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+function addSession() {
+  const sub = document.getElementById('m-subject').value;
+  const topic = document.getElementById('m-topic').value.trim() || 'Sessão de estudo';
+  const time = document.getElementById('m-time').value.trim() || '—';
+  state.sessions.push({ id: state.nextId++, day: addingDay, subject: sub, topic, time, done: false });
+  save(); closeModal(); renderCronograma(); updateSidebar();
+  showToast('📅 Sessão adicionada!');
+}
+
+// click outside modal closes it
+document.getElementById('modal-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ─── CHECKLIST ───────────────────────────────────────
+function renderChecklist() {
+  const grid = document.getElementById('subjects-grid');
+  grid.innerHTML = '';
+  const query = (document.getElementById('topic-search')?.value || '').toLowerCase().trim();
+
+  Object.keys(state.topics).forEach(subj => {
+    const allTopics = state.topics[subj];
+    const sorted = [...allTopics.filter(t=>t.done), ...allTopics.filter(t=>!t.done)];
+    // Filter by search
+    const filtered = query ? sorted.filter(t => t.text.toLowerCase().includes(query)) : sorted;
+    if (query && !filtered.length) return; // hide card if no matches
+    const doneCount = allTopics.filter(t => t.done).length;
+    const pct = allTopics.length ? Math.round(doneCount / allTopics.length * 100) : 0;
+    const color = COLORS[subj] || '#6ee7b7';
+    const name  = NAMES[subj]  || subj;
+
+    const card = document.createElement('div');
+    card.className = 'subject-card';
+    card.innerHTML = `
+      <div class="subject-header">
+        <div class="subject-name">
+          <div class="subject-dot" style="background:${color}"></div>
+          ${name}
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="subject-pct">${pct}%</div>
+          <button onclick="deleteSubject('${subj}')" title="Excluir matéria" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:2px 4px;border-radius:4px;transition:color .2s;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--muted)'">🗑</button>
+        </div>
+      </div>
+      <div class="subject-prog">
+        <div class="subject-prog-fill" style="width:${pct}%;background:${color}"></div>
+      </div>
+      <div class="topic-list" id="list-${subj}"></div>
+      <div class="add-topic-row">
+        <input class="topic-input" id="inp-${subj}" placeholder="Novo tópico…" onkeydown="if(event.key==='Enter')addTopic('${subj}')">
+        <button class="btn-sm" onclick="addTopic('${subj}')">+ Add</button>
+      </div>`;
+    grid.appendChild(card);
+
+    const list = card.querySelector(`#list-${subj}`);
+    const renderList = query ? filtered : sorted;
+    renderList.forEach((t, idx) => {
+      if (!query && idx > 0 && !t.done && sorted[idx-1].done) {
+        const div = document.createElement('div');
+        div.style.cssText = 'height:1px;background:var(--border);margin:6px 0;';
+        list.appendChild(div);
+      }
+      const item = document.createElement('div');
+      item.className = 'topic-item' + (t.done ? ' checked' : '');
+      item.style.justifyContent = 'space-between';
+      // Highlight matching text
+      const displayText = query
+        ? t.text.replace(new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi'),
+            '<mark style="background:rgba(245,158,11,.35);color:var(--text);border-radius:3px;padding:0 2px;">$1</mark>')
+        : t.text;
+      item.innerHTML = `
+        <div style="display:flex;align-items:center;gap:10px;flex:1;" onclick="toggleTopic('${subj}','${t.id}')">
+          <div class="checkbox">${t.done ? '✓' : ''}</div>
+          <div class="topic-text${t.done ? ' done' : ''}">${displayText}</div>
+        </div>
+        <button onclick="deleteTopic('${subj}','${t.id}')" title="Excluir tópico" style="background:transparent;border:none;color:transparent;cursor:pointer;font-size:12px;padding:2px 6px;border-radius:4px;transition:color .2s;flex-shrink:0;" class="del-topic-btn">✕</button>`;
+      list.appendChild(item);
+    });
+  });
+
+  // Add subject manager button at end (hide during search)
+  if (!query) {
+    const addCard = document.createElement('div');
+    addCard.style.cssText = 'display:flex;align-items:center;justify-content:center;';
+    addCard.innerHTML = `<button onclick="openSubjectModal()" style="background:var(--surface);border:1px dashed var(--border);border-radius:var(--radius);padding:28px 20px;width:100%;color:var(--muted);cursor:pointer;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;transition:all .2s;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">+ Nova Matéria</button>`;
+    grid.appendChild(addCard);
+  }
+}
+
+function toggleTopic(subj, id) {
+  const t = state.topics[subj].find(t => t.id === id);
+  if (t) {
+    const todayKey = getTodayKey ? getTodayKey() : new Date().toISOString().slice(0,10);
+    if (!t.done) { t.completedAt = todayKey; }
+    else { delete t.completedAt; }
+    t.done = !t.done;
+    save(); renderChecklist(); updateSidebar();
+    showToast(t.done ? '✅ Tópico concluído!' : '↩️ Tópico reaberto');
+    if (typeof checkConquistas === 'function') checkConquistas();
+  }
+}
+
+function addTopic(subj) {
+  const inp = document.getElementById('inp-' + subj);
+  const text = inp.value.trim();
+  if (!text) return;
+  state.topics[subj].push({ id: subj + Date.now(), text, done: false });
+  save(); renderChecklist(); updateSidebar(); showToast('📚 Tópico adicionado!');
+}
+
+function deleteTopic(subj, id) {
+  if (!confirm('Excluir este tópico?')) return;
+  state.topics[subj] = state.topics[subj].filter(t => t.id !== id);
+  save(); renderChecklist(); updateSidebar(); showToast('🗑 Tópico excluído');
+}
+
+function deleteSubject(subj) {
+  if (!confirm(`Excluir a matéria "${NAMES[subj]||subj}" e todos os seus tópicos?`)) return;
+  delete state.topics[subj];
+  state.sessions = state.sessions.filter(s => s.subject !== subj);
+  if (state.customSubjects) state.customSubjects = state.customSubjects.filter(c => c.key !== subj);
+  save(); renderChecklist(); renderCronograma(); updateSidebar();
+  showToast('🗑 Matéria excluída');
+}
+
+// ── Subject modal ──
+function openSubjectModal() {
+  document.getElementById('subj-modal').classList.add('open');
+  document.getElementById('subj-name').value = '';
+  document.getElementById('subj-color').value = '#6ee7b7';
+}
+function closeSubjectModal() {
+  document.getElementById('subj-modal').classList.remove('open');
+}
+function addSubject() {
+  const name = document.getElementById('subj-name').value.trim();
+  const color = document.getElementById('subj-color').value;
+  if (!name) return;
+  const key = 'custom_' + Date.now();
+  COLORS[key] = color;
+  NAMES[key] = name;
+  state.topics[key] = [];
+  if (!state.customSubjects) state.customSubjects = [];
+  state.customSubjects.push({ key, name, color });
+  // also add to modal select
+  const opt = document.createElement('option');
+  opt.value = key; opt.textContent = name;
+  document.getElementById('m-subject').appendChild(opt);
+  save(); closeSubjectModal(); renderChecklist();
+  showToast(`📚 Matéria "${name}" criada!`);
+}
+document.getElementById('subj-modal').addEventListener('click', function(e){
+  if(e.target===this) closeSubjectModal();
+});
+
+// ─── DASHBOARD ───────────────────────────────────────
+function renderDashboard() {
+  let total = 0, done = 0;
+  Object.values(state.topics).forEach(list => {
+    list.forEach(t => { total++; if (t.done) done++; });
+  });
+  document.getElementById('dash-done').textContent = done;
+  document.getElementById('dash-total').textContent = total;
+  document.getElementById('dash-sessions').textContent = state.sessions.length;
+  document.getElementById('dash-poms').textContent = state.pomCount;
+  const studyEl = document.getElementById('dash-study-time');
+  if (studyEl) studyEl.textContent = swFormatShort(getDailyMs());
+  const todayEl = document.getElementById('dash-today');
+  todayEl.innerHTML = '';
+  const todaySess = state.sessions.filter(s => s.day === TODAY);
+  if (!todaySess.length) {
+    todayEl.innerHTML = '<span style="color:var(--muted);font-size:13px;">Nenhuma sessão para hoje. Adicione no cronograma! 📅</span>';
+  } else {
+    todaySess.forEach(s => {
+      const c = document.createElement('div');
+      c.className = `session-card ${s.subject}` + (s.done ? ' done' : '');
+      c.style.flex = '1 1 180px';
+      c.innerHTML = `<div class="sess-subject">${NAMES[s.subject]||s.subject}</div>
+        <div class="sess-topic">${s.topic}</div>
+        <div class="sess-time">🕐 ${s.time}</div>`;
+      c.onclick = () => { toggleSession(s.id); renderDashboard(); };
+      todayEl.appendChild(c);
+    });
+  }
+
+  // Subject progress bars
+  const subEl = document.getElementById('dash-subjects');
+  subEl.innerHTML = '';
+  Object.keys(state.topics).forEach(subj => {
+    const list = state.topics[subj];
+    const d = list.filter(t => t.done).length;
+    const pct = list.length ? Math.round(d/list.length*100) : 0;
+    subEl.innerHTML += `
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="width:90px;font-size:13px;color:var(--muted);flex-shrink:0;">${NAMES[subj]}</div>
+        <div style="flex:1;height:6px;background:var(--border);border-radius:99px;overflow:hidden;">
+          <div style="width:${pct}%;height:100%;background:${COLORS[subj]};border-radius:99px;transition:width .4s;"></div>
+        </div>
+        <div style="width:36px;text-align:right;font-size:12px;color:var(--muted);">${pct}%</div>
+      </div>`;
+  });
+}
+
+function updateSidebar() {
+  let total = 0, done = 0;
+  Object.values(state.topics).forEach(list => {
+    list.forEach(t => { total++; if (t.done) done++; });
+  });
+  const pct = total ? Math.round(done/total*100) : 0;
+  document.getElementById('sb-pct').textContent = pct + '%';
+  document.getElementById('sb-fill').style.width = pct + '%';
+}
+
+// ─── TIMER LIVRE (STOPWATCH) ─────────────────────────
+let swInterval = null;
+let swRunning = false;
+let swElapsed = 0;
+let swLapStart = 0;
+let swLaps = [];
+let swStartTime = null;
+let pendingSessionMs = 0;  // ms elapsed when Finalizar is clicked
+
+const RATING_DESCS = {
+  1:'😵 Péssimo — sem foco', 2:'😞 Muito fraco', 3:'😕 Fraco',
+  4:'😐 Abaixo do esperado', 5:'🙂 Médio', 6:'😊 Razoável',
+  7:'😎 Bom', 8:'🔥 Muito bom', 9:'🚀 Excelente', 10:'🏆 Perfeito!'
+};
+let selectedRating = 0;
+
+function swFormat(ms) {
+  const total = Math.floor(ms / 1000);
+  const h = String(Math.floor(total / 3600)).padStart(2,'0');
+  const m = String(Math.floor((total % 3600) / 60)).padStart(2,'0');
+  const s = String(total % 60).padStart(2,'0');
+  return `${h}:${m}:${s}`;
+}
+function swFormatShort(ms) {
+  const total = Math.floor(ms / 1000);
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  return h > 0 ? `${h}h ${m}min` : `${m}min`;
+}
+
+function swTick() {
+  const now = Date.now();
+  const cur = swElapsed + (now - swStartTime);
+  document.getElementById('sw-display').textContent = swFormat(cur);
+}
+
+function swToggle() {
+  if (swRunning) {
+    swElapsed += Date.now() - swStartTime;
+    clearInterval(swInterval);
+    swRunning = false;
+    document.getElementById('sw-toggle').textContent = '▶ Continuar';
+    document.getElementById('sw-toggle').className = 'timer-btn primary';
+    document.getElementById('sw-sub').textContent = 'Pausado';
+  } else {
+    swStartTime = Date.now();
+    swRunning = true;
+    swInterval = setInterval(swTick, 200);
+    document.getElementById('sw-toggle').textContent = '⏸ Pausar';
+    document.getElementById('sw-sub').textContent = 'Cronômetro rodando…';
+  }
+}
+
+function swLap() {
+  if (!swRunning && swElapsed === 0) return;
+  const cur = swElapsed + (swRunning ? Date.now() - swStartTime : 0);
+  const lapTime = cur - swLapStart;
+  swLapStart = cur;
+  swLaps.unshift({ num: swLaps.length + 1, lap: lapTime, total: cur });
+  swRenderLaps();
+  showToast(`⬥ Lap ${swLaps[0].num} registrado!`);
+}
+
+function swReset() {
+  if (swElapsed > 0 || (swRunning && swStartTime)) {
+    const cur = swElapsed + (swRunning ? Date.now() - swStartTime : 0);
+    if (cur > 30000 && !confirm('Zerar sem salvar a sessão?')) return;
+  }
+  clearInterval(swInterval);
+  swRunning = false; swElapsed = 0; swLapStart = 0; swLaps = [];
+  document.getElementById('sw-display').textContent = '00:00:00';
+  document.getElementById('sw-toggle').textContent = '▶ Iniciar';
+  document.getElementById('sw-toggle').className = 'timer-btn primary';
+  document.getElementById('sw-sub').textContent = 'Pronto para começar';
+  swRenderLaps();
+}
+
+function swRenderLaps() {
+  const el = document.getElementById('sw-laps');
+  if (!el) return;
+  if (!swLaps.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:6px 0;">Nenhum lap ainda.</div>';
+    return;
+  }
+  el.innerHTML = swLaps.map(l => `
+    <div class="lap-item">
+      <span class="lap-num">Lap ${l.num}</span>
+      <span class="lap-time">${swFormat(l.lap)}</span>
+      <span class="lap-total">total ${swFormat(l.total)}</span>
+    </div>`).join('');
+}
+
+function swFinishSession() {
+  const cur = swElapsed + (swRunning ? Date.now() - swStartTime : 0);
+  if (cur < 10000) { showToast('⏱️ Sessão muito curta!'); return; }
+  // Pause if running
+  if (swRunning) {
+    swElapsed += Date.now() - swStartTime;
+    clearInterval(swInterval);
+    swRunning = false;
+    document.getElementById('sw-toggle').textContent = '▶ Continuar';
+    document.getElementById('sw-toggle').className = 'timer-btn primary';
+  }
+  pendingSessionMs = swElapsed;
+  openRatingModal();
+}
+
+// ── Goal tracking ──
+function getTodayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function getDailyMs() {
+  const key = getTodayKey();
+  const log = state.sessionLog || [];
+  return log.filter(s => s.date === key).reduce((sum,s) => sum + s.ms, 0);
+}
+function updateGoalBar() {
+  const goalMs = (state.dailyGoalH || 5) * 3600 * 1000;
+  const doneMs = getDailyMs();
+  const pct = Math.min(100, Math.round(doneMs / goalMs * 100));
+  const bar = document.getElementById('goal-bar');
+  const label = document.getElementById('goal-pct-label');
+  const todayH = document.getElementById('goal-today-h');
+  const dateLabel = document.getElementById('goal-date-label');
+  if (bar) bar.style.width = pct + '%';
+  if (label) {
+    label.textContent = pct + '%';
+    label.style.color = pct >= 100 ? 'var(--accent)' : 'var(--accent3)';
+  }
+  if (todayH) todayH.textContent = swFormatShort(doneMs);
+  if (dateLabel) {
+    const d = new Date();
+    dateLabel.textContent = `Hoje, ${d.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'})}`;
+  }
+}
+function editGoal() {
+  document.getElementById('goal-input').value = state.dailyGoalH || 5;
+  document.getElementById('goal-modal').classList.add('open');
+}
+function saveGoal() {
+  const v = parseFloat(document.getElementById('goal-input').value);
+  if (v > 0) { state.dailyGoalH = v; save(); updateGoalBar(); showToast('🎯 Meta atualizada!'); }
+  document.getElementById('goal-modal').classList.remove('open');
+}
+
+// ── Session log ──
+function renderSessionLog() {
+  const el = document.getElementById('sessions-log');
+  if (!el) return;
+  const log = (state.sessionLog || []).slice().reverse();
+  if (!log.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:10px 0;">Nenhuma sessão registrada ainda.</div>';
+    return;
+  }
+  // Group by date
+  const byDate = {};
+  log.forEach(s => {
+    if (!byDate[s.date]) byDate[s.date] = [];
+    byDate[s.date].push(s);
+  });
+  el.innerHTML = '';
+  Object.keys(byDate).forEach(date => {
+    const sessions = byDate[date];
+    const totalMs = sessions.reduce((sum,s) => sum + s.ms, 0);
+    const goalMs = (state.dailyGoalH || 5) * 3600 * 1000;
+    const pct = Math.min(100, Math.round(totalMs / goalMs * 100));
+    const avgRating = sessions.filter(s=>s.rating).reduce((sum,s,_,a)=>sum+s.rating/a.length,0);
+    const dateObj = new Date(date + 'T12:00:00');
+    const dateStr = dateObj.toLocaleDateString('pt-BR',{weekday:'short',day:'numeric',month:'short'});
+
+    const group = document.createElement('div');
+    group.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:4px;';
+    group.innerHTML = `
+      <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;">${dateStr}</span>
+          ${pct>=100?'<span style="background:rgba(110,231,183,.15);color:var(--accent);font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;font-family:Syne">✓ META</span>':''}
+        </div>
+        <div style="display:flex;align-items:center;gap:16px;">
+          ${avgRating ? `<span style="font-size:12px;color:var(--accent2);">★ ${avgRating.toFixed(1)}</span>` : ''}
+          <span style="font-family:'Syne',sans-serif;font-weight:700;color:var(--accent3);font-size:14px;">${swFormatShort(totalMs)}</span>
+          <div style="width:60px;height:4px;background:var(--border);border-radius:99px;overflow:hidden;"><div style="width:${pct}%;height:100%;background:linear-gradient(90deg,var(--accent3),var(--accent));border-radius:99px;"></div></div>
+        </div>
+      </div>
+      <div style="display:none;">
+        ${sessions.map(s=>`
+          <div style="padding:10px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-size:13px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="width:8px;height:8px;border-radius:50%;background:${COLORS[s.subject]||'var(--muted)'};flex-shrink:0;"></div>
+              <span style="color:var(--text);">${NAMES[s.subject]||s.subject||'—'}</span>
+              ${s.note?`<span style="color:var(--muted);font-style:italic;">"${s.note}"</span>`:''}
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;">
+              ${s.rating?`<span style="color:var(--accent2);font-weight:700;">★ ${s.rating}</span>`:''}
+              <span style="color:var(--muted);">${swFormat(s.ms)}</span>
+              <span style="color:var(--muted);font-size:11px;">${s.time}</span>
+            </div>
+          </div>`).join('')}
+      </div>`;
+    el.appendChild(group);
+  });
+}
+
+function clearSessions() {
+  if (!confirm('Limpar todo o histórico de sessões?')) return;
+  state.sessionLog = [];
+  save(); renderSessionLog(); updateGoalBar();
+  showToast('🗑 Histórico limpo');
+}
+
+// ── Rating modal ──
+function openRatingModal() {
+  selectedRating = 0;
+  const subjEl = document.getElementById('sw-subject');
+  const subj = subjEl ? subjEl.value : '';
+  const subjName = NAMES[subj] || subj || '—';
+  document.getElementById('rating-summary').innerHTML =
+    `⏱ Duração: <strong>${swFormat(pendingSessionMs)}</strong> &nbsp;|&nbsp; 📚 Matéria: <strong>${subjName}</strong>`;
+  document.getElementById('rating-note').value = '';
+  document.getElementById('rating-desc').textContent = '';
+
+  // Build topics list
+  const topicsEl = document.getElementById('session-topics-list');
+  const topics = subj && state.topics[subj] ? state.topics[subj] : [];
+  const pending = topics.filter(t => !t.done);
+  if (!pending.length) {
+    topicsEl.innerHTML = subj
+      ? '<div style="color:var(--muted);font-size:12px;">Todos os tópicos dessa matéria já foram concluídos! 🎉</div>'
+      : '<div style="color:var(--muted);font-size:12px;">Selecione uma matéria no timer para marcar tópicos estudados.</div>';
+  } else {
+    topicsEl.innerHTML = pending.map(t => `
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 2px;border-radius:6px;" onmouseover="this.style.background='rgba(255,255,255,.03)'" onmouseout="this.style.background='transparent'">
+        <input type="checkbox" data-subj="${subj}" data-id="${t.id}"
+          style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;">
+        <span style="font-size:13px;color:var(--text);">${t.text}</span>
+      </label>`).join('');
+  }
+
+  // Build number buttons 1-10
+  const starsEl = document.getElementById('rating-stars');
+  starsEl.innerHTML = '';
+  for (let i=1;i<=10;i++) {
+    const btn = document.createElement('button');
+    btn.textContent = i;
+    btn.dataset.val = i;
+    btn.style.cssText = `width:42px;height:42px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'Syne',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:all .15s;`;
+    btn.onclick = () => selectRating(i);
+    starsEl.appendChild(btn);
+  }
+  document.getElementById('rating-modal').classList.add('open');
+}
+
+function selectRating(n) {
+  selectedRating = n;
+  document.getElementById('rating-desc').textContent = RATING_DESCS[n] || '';
+  document.querySelectorAll('#rating-stars button').forEach(b => {
+    const v = parseInt(b.dataset.val);
+    if (v <= n) {
+      b.style.background = n >= 8 ? 'var(--accent)' : n >= 5 ? 'var(--accent2)' : 'var(--danger)';
+      b.style.borderColor = b.style.background;
+      b.style.color = '#0d0f14';
+    } else {
+      b.style.background = 'var(--surface2)';
+      b.style.borderColor = 'var(--border)';
+      b.style.color = 'var(--text)';
+    }
+  });
+}
+
+function closeRatingModal() {
+  document.getElementById('rating-modal').classList.remove('open');
+}
+
+function saveRating() {
+  const note = document.getElementById('rating-note').value.trim();
+  const subjEl = document.getElementById('sw-subject');
+  const subj = subjEl ? subjEl.value : '';
+  const now = new Date();
+
+  // Apply checked topics
+  const checkedBoxes = document.querySelectorAll('#session-topics-list input[type=checkbox]:checked');
+  const markedTopics = [];
+  checkedBoxes.forEach(cb => {
+    const s = cb.dataset.subj, id = cb.dataset.id;
+    const t = state.topics[s]?.find(t => t.id === id);
+    if (t && !t.done) {
+      t.done = true;
+      t.completedAt = getTodayKey();
+      markedTopics.push(t.text);
+    }
+  });
+
+  const entry = {
+    id: Date.now(),
+    date: getTodayKey(),
+    time: now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),
+    ms: pendingSessionMs,
+    subject: subj,
+    rating: selectedRating || null,
+    note: note || null,
+    topicsStudied: markedTopics.length ? markedTopics : null,
+  };
+  if (!state.sessionLog) state.sessionLog = [];
+  state.sessionLog.push(entry);
+  save();
+  closeRatingModal();
+  // reset timer
+  clearInterval(swInterval);
+  swRunning = false; swElapsed = 0; swLapStart = 0; swLaps = [];
+  document.getElementById('sw-display').textContent = '00:00:00';
+  document.getElementById('sw-toggle').textContent = '▶ Iniciar';
+  document.getElementById('sw-toggle').className = 'timer-btn primary';
+  document.getElementById('sw-sub').textContent = 'Pronto para começar';
+  swRenderLaps();
+  updateGoalBar();
+  renderSessionLog();
+  updateSidebar();
+  if (markedTopics.length) {
+    showToast(`✅ Sessão salva! ${markedTopics.length} tópico(s) marcado(s).`);
+  } else {
+    showToast('✅ Sessão salva!');
+  }
+  if (typeof checkConquistas === 'function') checkConquistas();
+}
+
+document.getElementById('rating-modal').addEventListener('click', function(e){
+  if(e.target===this) closeRatingModal();
+});
+document.getElementById('goal-modal').addEventListener('click', function(e){
+  if(e.target===this) document.getElementById('goal-modal').classList.remove('open');
+});
+
+// ─── POMODORO ────────────────────────────────────────
+let timerInterval = null;
+let timerRunning = false;
+let timerSeconds = 25 * 60;
+let isBreak = false;
+
+function toggleTimer() {
+  if (timerRunning) {
+    clearInterval(timerInterval);
+    timerRunning = false;
+    document.getElementById('timer-toggle').textContent = '▶ Continuar';
+    document.getElementById('timer-toggle').className = 'timer-btn primary';
+  } else {
+    timerRunning = true;
+    document.getElementById('timer-toggle').textContent = '⏸ Pausar';
+    timerInterval = setInterval(() => {
+      timerSeconds--;
+      updateTimerDisplay();
+      if (timerSeconds <= 0) {
+        clearInterval(timerInterval);
+        timerRunning = false;
+        if (!isBreak) {
+          state.pomCount++;
+          state.pomMins += 25;
+          document.getElementById('pom-count').textContent = state.pomCount;
+          document.getElementById('pom-mins').textContent = state.pomMins;
+          document.getElementById('dash-poms').textContent = state.pomCount;
+          save();
+          showToast('🍅 Pomodoro concluído! Hora da pausa!');
+          isBreak = true;
+          timerSeconds = 5 * 60;
+          document.getElementById('timer-mode').textContent = 'PAUSA';
+          document.getElementById('timer-sub').textContent = 'Descanse 5 minutos!';
+        } else {
+          isBreak = false;
+          timerSeconds = 25 * 60;
+          document.getElementById('timer-mode').textContent = 'FOCO';
+          document.getElementById('timer-sub').textContent = 'Prepare-se para estudar';
+          showToast('🎯 Pausa encerrada! Bora estudar!');
+        }
+        document.getElementById('timer-toggle').textContent = '▶ Iniciar';
+        updateTimerDisplay();
+      }
+    }, 1000);
+  }
+}
+
+function resetTimer() {
+  clearInterval(timerInterval);
+  timerRunning = false;
+  isBreak = false;
+  timerSeconds = 25 * 60;
+  document.getElementById('timer-mode').textContent = 'FOCO';
+  document.getElementById('timer-sub').textContent = 'Prepare-se para estudar';
+  document.getElementById('timer-toggle').textContent = '▶ Iniciar';
+  document.getElementById('timer-toggle').className = 'timer-btn primary';
+  updateTimerDisplay();
+}
+
+function updateTimerDisplay() {
+  const m = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+  const s = String(timerSeconds % 60).padStart(2, '0');
+  document.getElementById('timer-display').textContent = `${m}:${s}`;
+}
+
+// ─── TOAST ───────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+}
+
+function populateSwSubjects() {
+  const sel = document.getElementById('sw-subject');
+  if (!sel) return;
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">— selecione —</option>';
+  Object.keys(NAMES).forEach(k => {
+    const opt = document.createElement('option');
+    opt.value = k; opt.textContent = NAMES[k];
+    if (k === cur) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+// ─── SIMULADOS ───────────────────────────────────────
+const BANCAS = ['ENEM','FUVEST','UNESP','UNICAMP','UNIFESP','FAMERP'];
+const BANCA_COLORS = {ENEM:'#6ee7b7',FUVEST:'#f59e0b',UNESP:'#818cf8',UNICAMP:'#f472b6',UNIFESP:'#60a5fa',FAMERP:'#f87171'};
+let simFilter = 'TODOS';
+
+function openSimModal() {
+  document.getElementById('sim-date').value = new Date().toISOString().slice(0,10);
+  ['mat','ling','cien','hum','red','total'].forEach(f => document.getElementById('ssc-'+f).value='');
+  document.getElementById('sim-obs').value = '';
+  document.getElementById('sim-modal').classList.add('open');
+}
+function closeSimModal() { document.getElementById('sim-modal').classList.remove('open'); }
+
+function saveSim() {
+  const banca = document.getElementById('sim-banca').value;
+  const date  = document.getElementById('sim-date').value;
+  const scores = {};
+  ['mat','ling','cien','hum','red','total'].forEach(f => {
+    const v = document.getElementById('ssc-'+f).value;
+    if (v !== '') scores[f] = parseFloat(v);
+  });
+  const obs = document.getElementById('sim-obs').value.trim();
+  if (!state.simulados) state.simulados = [];
+  state.simulados.push({ id: Date.now(), banca, date, scores, obs: obs||null });
+  save(); closeSimModal(); renderSimulados(); renderCharts();
+  checkConquistas();
+  showToast('📝 Simulado salvo!');
+}
+
+function renderSimulados() {
+  // Tabs
+  const tabs = document.getElementById('sim-banca-tabs');
+  if (!tabs) return;
+  const all = ['TODOS', ...BANCAS];
+  tabs.innerHTML = all.map(b => `
+    <button onclick="simFilter='${b}';renderSimulados()" style="padding:7px 16px;border-radius:8px;border:1px solid ${simFilter===b?'var(--accent)':'var(--border)'};background:${simFilter===b?'rgba(110,231,183,.12)':'transparent'};color:${simFilter===b?'var(--accent)':'var(--muted)'};font-family:'Syne',sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;">${b}</button>`).join('');
+
+  const label = document.getElementById('sim-banca-label');
+  if (label) label.textContent = simFilter;
+
+  const list = document.getElementById('sim-list');
+  if (!list) return;
+  const sims = (state.simulados||[]).filter(s => simFilter==='TODOS'||s.banca===simFilter)
+    .slice().sort((a,b)=>b.date.localeCompare(a.date));
+
+  if (!sims.length) {
+    list.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:16px 0;">Nenhum simulado registrado ainda.</div>';
+    return;
+  }
+
+  const SCORE_LABELS = {mat:'Mat',ling:'Ling',cien:'C.Nat',hum:'C.Hum',red:'Red',total:'Total'};
+
+  list.innerHTML = sims.map(s => {
+    const dateStr = new Date(s.date+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric'});
+    const scoreChips = Object.entries(s.scores).map(([k,v])=>
+      `<span style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;color:var(--text);">${SCORE_LABELS[k]||k}: <span style="color:var(--accent)">${v}</span></span>`
+    ).join('');
+    return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="background:${BANCA_COLORS[s.banca]||'#6ee7b7'};color:#0d0f14;font-family:'Syne',sans-serif;font-size:11px;font-weight:800;padding:3px 10px;border-radius:6px;">${s.banca}</span>
+          <span style="font-size:13px;color:var(--muted);">${dateStr}</span>
+        </div>
+        <button onclick="deleteSim(${s.id})" style="background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:13px;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--muted)'">🗑</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:${s.obs?'10px':'0'}">${scoreChips}</div>
+      ${s.obs?`<div style="font-size:12px;color:var(--muted);font-style:italic;margin-top:6px;">"${s.obs}"</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function deleteSim(id) {
+  if (!confirm('Excluir este simulado?')) return;
+  state.simulados = (state.simulados||[]).filter(s=>s.id!==id);
+  save(); renderSimulados(); renderCharts();
+  showToast('🗑 Simulado excluído');
+}
+
+document.getElementById('sim-modal').addEventListener('click',function(e){if(e.target===this)closeSimModal();});
+
+// ─── GRÁFICOS (Chart.js) ─────────────────────────────
+let chartHours=null, chartTopics=null, chartSims=null;
+
+function renderCharts() {
+  if (!document.getElementById('chart-hours')) return;
+  renderChartHours();
+  renderChartTopics();
+  renderChartSims();
+}
+
+function chartDestroy(c) { if(c){ try{c.destroy();}catch(e){} } }
+
+function renderChartHours() {
+  const ctx = document.getElementById('chart-hours');
+  if (!ctx) return;
+  chartDestroy(chartHours);
+  // Last 7 days
+  const days = [];
+  const vals = [];
+  for (let i=6;i>=0;i--) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const ms = (state.sessionLog||[]).filter(s=>s.date===key).reduce((a,s)=>a+s.ms,0);
+    days.push(d.toLocaleDateString('pt-BR',{weekday:'short',day:'numeric'}));
+    vals.push(parseFloat((ms/3600000).toFixed(2)));
+  }
+  const goalH = state.dailyGoalH || 5;
+  chartHours = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels:days,
+      datasets:[
+        {label:'Horas',data:vals,backgroundColor:'rgba(129,140,248,.7)',borderColor:'#818cf8',borderWidth:1,borderRadius:6},
+        {label:'Meta',data:Array(7).fill(goalH),type:'line',borderColor:'#6ee7b7',borderWidth:2,borderDash:[4,4],pointRadius:0,fill:false}
+      ]
+    },
+    options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#64748b',font:{size:10}},grid:{color:'rgba(255,255,255,.03)'}},y:{ticks:{color:'#64748b',font:{size:10}},grid:{color:'rgba(255,255,255,.05)'},beginAtZero:true}}}
+  });
+}
+
+function renderChartTopics() {
+  const ctx = document.getElementById('chart-topics');
+  if (!ctx) return;
+  chartDestroy(chartTopics);
+  const labels=[], done=[], total=[];
+  Object.keys(state.topics).forEach(k=>{
+    const list = state.topics[k];
+    labels.push(NAMES[k]||k);
+    done.push(list.filter(t=>t.done).length);
+    total.push(list.length);
+  });
+  chartTopics = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        {label:'Feitos',data:done,backgroundColor:'rgba(110,231,183,.7)',borderRadius:4},
+        {label:'Total',data:total,backgroundColor:'rgba(255,255,255,.06)',borderRadius:4}
+      ]
+    },
+    options:{responsive:true,plugins:{legend:{display:false}},indexAxis:'y',scales:{x:{ticks:{color:'#64748b',font:{size:10}},grid:{color:'rgba(255,255,255,.04)'}},y:{ticks:{color:'#64748b',font:{size:9}},grid:{display:false}}}}
+  });
+}
+
+function renderChartSims() {
+  const ctx = document.getElementById('chart-sims');
+  if (!ctx) return;
+  chartDestroy(chartSims);
+  const sims = (state.simulados||[]).filter(s=>s.scores.total!=null).slice().sort((a,b)=>a.date.localeCompare(b.date));
+  if (!sims.length) { ctx.parentElement.style.display='none'; return; }
+  ctx.parentElement.style.display='';
+  // One dataset per banca
+  const datasets = BANCAS.map(b => {
+    const pts = sims.filter(s=>s.banca===b);
+    return {
+      label:b,
+      data: pts.map(s=>({x:s.date, y:s.scores.total})),
+      borderColor: BANCA_COLORS[b],
+      backgroundColor: BANCA_COLORS[b]+'44',
+      tension:.3, pointRadius:5, pointHoverRadius:7,
+      fill:false
+    };
+  }).filter(d=>d.data.length>0);
+  const labels = [...new Set(sims.map(s=>s.date))].sort();
+  chartSims = new Chart(ctx, {
+    type:'line',
+    data:{labels, datasets},
+    options:{responsive:true,plugins:{legend:{labels:{color:'#94a3b8',font:{size:11}}}},scales:{x:{ticks:{color:'#64748b',font:{size:10}},grid:{color:'rgba(255,255,255,.03)'}},y:{ticks:{color:'#64748b',font:{size:10}},grid:{color:'rgba(255,255,255,.05)'},beginAtZero:true}}}
+  });
+}
+
+// ─── REVISÃO ESPAÇADA ────────────────────────────────
+const REV_INTERVALS = [1,7,30]; // days
+
+function getDoneTopicsWithDate() {
+  // Returns all done topics with the date they were completed (from sessionLog, or today if no date)
+  // We use a simple heuristic: if the topic is done and has a completedAt, use it; else use today
+  const result = [];
+  Object.keys(state.topics).forEach(subj => {
+    state.topics[subj].filter(t=>t.done).forEach(t => {
+      result.push({ subj, id: t.id, text: t.text, completedAt: t.completedAt || getTodayKey() });
+    });
+  });
+  return result;
+}
+
+function markTopicDone(subj, id) {
+  const t = state.topics[subj]?.find(t=>t.id===id);
+  if (t && !t.completedAt) { t.completedAt = getTodayKey(); save(); }
+}
+
+function daysBetween(dateStr) {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const d = new Date(dateStr+'T00:00:00'); d.setHours(0,0,0,0);
+  return Math.floor((today - d) / 86400000);
+}
+
+function getRevisionsDue() {
+  const done = getDoneTopicsWithDate();
+  const due = [];
+  done.forEach(t => {
+    const age = daysBetween(t.completedAt);
+    // Check which intervals are due (within 1 day window)
+    REV_INTERVALS.forEach(interval => {
+      const revKey = `${t.subj}_${t.id}_${interval}`;
+      const alreadyDone = (state.revisionsDone || []).includes(revKey);
+      if (!alreadyDone && age >= interval && age <= interval + 3) {
+        due.push({ ...t, interval, revKey, age });
+      }
+    });
+  });
+  return due;
+}
+
+function renderRevisao() {
+  const due = getRevisionsDue();
+  const statsEl = document.getElementById('rev-stats');
+  const listEl = document.getElementById('rev-list');
+  if (!statsEl || !listEl) return;
+
+  // Stats cards
+  const overdue = getDoneTopicsWithDate().filter(t => {
+    const age = daysBetween(t.completedAt);
+    return REV_INTERVALS.some(iv => {
+      const k = `${t.subj}_${t.id}_${iv}`;
+      return !(state.revisionsDone||[]).includes(k) && age > iv+3;
+    });
+  }).length;
+
+  statsEl.innerHTML = [
+    {icon:'🔔',val:due.length,label:'Para revisar hoje',color:'var(--accent2)'},
+    {icon:'⚠️',val:overdue,label:'Atrasadas',color:'var(--danger)'},
+    {icon:'✅',val:(state.revisionsDone||[]).length,label:'Revisões feitas',color:'var(--accent)'},
+  ].map(s=>`<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;">
+    <div style="font-size:22px;margin-bottom:6px;">${s.icon}</div>
+    <div style="font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:${s.color};">${s.val}</div>
+    <div style="font-size:12px;color:var(--muted);margin-top:2px;">${s.label}</div>
+  </div>`).join('');
+
+  if (!due.length) {
+    listEl.innerHTML = '<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;text-align:center;color:var(--muted);font-size:14px;">🎉 Nenhuma revisão pendente hoje! Continue estudando.</div>';
+    return;
+  }
+
+  const grouped = {};
+  due.forEach(t => {
+    if (!grouped[t.subj]) grouped[t.subj] = [];
+    grouped[t.subj].push(t);
+  });
+
+  listEl.innerHTML = '';
+  Object.keys(grouped).forEach(subj => {
+    const block = document.createElement('div');
+    block.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:8px;';
+    block.innerHTML = `<div style="padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;">
+      <div style="width:8px;height:8px;border-radius:50%;background:${COLORS[subj]||'var(--muted)'}"></div>
+      <span style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;">${NAMES[subj]||subj}</span>
+      <span style="font-size:11px;color:var(--muted);">${grouped[subj].length} tópico(s)</span>
+    </div>`;
+    grouped[subj].forEach(t => {
+      const row = document.createElement('div');
+      row.style.cssText='padding:11px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-size:13px;';
+      row.innerHTML = `
+        <div>
+          <span>${t.text}</span>
+          <span style="margin-left:10px;font-size:10px;color:var(--muted);background:var(--surface2);padding:2px 7px;border-radius:99px;">${t.interval}d</span>
+        </div>
+        <button onclick="markRevisionDone('${t.revKey}')" style="background:rgba(110,231,183,.1);border:1px solid var(--accent);border-radius:7px;color:var(--accent);font-size:11px;font-weight:700;padding:5px 12px;cursor:pointer;font-family:'Syne',sans-serif;transition:all .2s;" onmouseover="this.style.background='rgba(110,231,183,.25)'" onmouseout="this.style.background='rgba(110,231,183,.1)'">✓ Revisado</button>`;
+      block.appendChild(row);
+    });
+    listEl.appendChild(block);
+  });
+}
+
+function markRevisionDone(revKey) {
+  if (!state.revisionsDone) state.revisionsDone = [];
+  if (!state.revisionsDone.includes(revKey)) state.revisionsDone.push(revKey);
+  save(); renderRevisao(); checkConquistas();
+  showToast('✅ Revisão marcada!');
+}
+
+// ─── CONQUISTAS ──────────────────────────────────────
+const BADGE_DEFS = [
+  { id:'first_session',  icon:'🎯', name:'Primeira Sessão',     desc:'Complete sua primeira sessão de estudo',        check: s => (s.sessionLog||[]).length >= 1 },
+  { id:'streak_3',       icon:'🔥', name:'3 Dias Seguidos',     desc:'Estude por 3 dias consecutivos',                check: s => checkStreak(s, 3) },
+  { id:'streak_7',       icon:'⚡', name:'Semana Perfeita',     desc:'Estude por 7 dias consecutivos',                check: s => checkStreak(s, 7) },
+  { id:'goal_1',         icon:'⭐', name:'Meta Batida!',        desc:'Atinja a meta diária pela primeira vez',         check: s => (s.sessionLog||[]).filter(sl=>sl.date).reduce((dates,sl)=>{dates.add(sl.date);return dates;},new Set()).size >= 1 && checkGoalDay(s, 1) },
+  { id:'goal_5',         icon:'🏆', name:'5x Meta Batida',      desc:'Bata a meta diária em 5 dias diferentes',       check: s => checkGoalDay(s, 5) },
+  { id:'topics_10',      icon:'📚', name:'10 Tópicos',          desc:'Conclua 10 tópicos no checklist',               check: s => countDoneTopics(s) >= 10 },
+  { id:'topics_50',      icon:'📖', name:'50 Tópicos',          desc:'Conclua 50 tópicos no checklist',               check: s => countDoneTopics(s) >= 50 },
+  { id:'topics_100',     icon:'🎓', name:'100 Tópicos',         desc:'Conclua 100 tópicos no checklist',              check: s => countDoneTopics(s) >= 100 },
+  { id:'sim_first',      icon:'📝', name:'Primeiro Simulado',   desc:'Registre seu primeiro simulado',                check: s => (s.simulados||[]).length >= 1 },
+  { id:'sim_5',          icon:'🎯', name:'5 Simulados',         desc:'Registre 5 simulados',                          check: s => (s.simulados||[]).length >= 5 },
+  { id:'rev_first',      icon:'🔔', name:'Primeira Revisão',    desc:'Faça sua primeira revisão espaçada',            check: s => (s.revisionsDone||[]).length >= 1 },
+  { id:'rev_20',         icon:'🧠', name:'20 Revisões',         desc:'Complete 20 revisões espaçadas',                check: s => (s.revisionsDone||[]).length >= 20 },
+  { id:'rating_10',      icon:'💯', name:'Nota 10!',            desc:'Dê nota 10 a uma sessão de estudos',            check: s => (s.sessionLog||[]).some(sl=>sl.rating===10) },
+  { id:'hour_50',        icon:'⏰', name:'50 Horas',            desc:'Acumule 50 horas totais de estudo',             check: s => totalStudyMs(s) >= 50*3600000 },
+  { id:'hour_100',       icon:'🌟', name:'100 Horas',           desc:'Acumule 100 horas totais de estudo',            check: s => totalStudyMs(s) >= 100*3600000 },
+];
+
+function countDoneTopics(s) { return Object.values(s.topics||{}).flat().filter(t=>t.done).length; }
+function totalStudyMs(s) { return (s.sessionLog||[]).reduce((a,sl)=>a+sl.ms,0); }
+function checkStreak(s, days) {
+  const dates = [...new Set((s.sessionLog||[]).map(sl=>sl.date))].sort();
+  if (!dates.length) return false;
+  let streak = 1, max = 1;
+  for (let i=1;i<dates.length;i++) {
+    const diff = daysBetween(dates[i-1]) - daysBetween(dates[i]);
+    if (diff === 1) { streak++; max = Math.max(max, streak); }
+    else streak = 1;
+  }
+  return max >= days;
+}
+function checkGoalDay(s, count) {
+  const goalMs = (s.dailyGoalH||5)*3600000;
+  const byDate = {};
+  (s.sessionLog||[]).forEach(sl=>{ byDate[sl.date]=(byDate[sl.date]||0)+sl.ms; });
+  return Object.values(byDate).filter(ms=>ms>=goalMs).length >= count;
+}
+
+function checkConquistas() {
+  if (!state.badges) state.badges = [];
+  let newBadge = false;
+  BADGE_DEFS.forEach(b => {
+    if (!state.badges.includes(b.id) && b.check(state)) {
+      state.badges.push(b.id);
+      newBadge = true;
+      showToast(`🏅 Conquista desbloqueada: ${b.name}!`);
+    }
+  });
+  if (newBadge) { save(); renderConquistas(); }
+}
+
+function renderConquistas() {
+  const el = document.getElementById('badges-grid');
+  if (!el) return;
+  el.innerHTML = BADGE_DEFS.map(b => {
+    const unlocked = (state.badges||[]).includes(b.id);
+    return `<div style="background:var(--surface);border:1px solid ${unlocked?'var(--accent)':'var(--border)'};border-radius:var(--radius);padding:20px;text-align:center;opacity:${unlocked?1:.4};transition:all .3s;">
+      <div style="font-size:32px;margin-bottom:8px;">${b.icon}</div>
+      <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:700;margin-bottom:4px;color:${unlocked?'var(--text)':'var(--muted)'};">${b.name}</div>
+      <div style="font-size:11px;color:var(--muted);">${b.desc}</div>
+      ${unlocked?'<div style="margin-top:8px;font-size:10px;color:var(--accent);font-weight:700;">DESBLOQUEADO ✓</div>':''}
+    </div>`;
+  }).join('');
+}
+
+// ─── CALENDÁRIO ──────────────────────────────────────
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+const CAL_MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const CAL_DAYS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+
+function calPrev() { calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalendario(); }
+function calNext() { calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCalendario(); }
+
+function renderCalendario() {
+  const titleEl = document.getElementById('cal-title');
+  const wdEl    = document.getElementById('cal-weekdays');
+  const gridEl  = document.getElementById('cal-grid');
+  const detEl   = document.getElementById('cal-detail');
+  if (!titleEl) return;
+
+  titleEl.textContent = `${CAL_MONTHS[calMonth]} ${calYear}`;
+  wdEl.innerHTML = CAL_DAYS.map(d =>
+    `<div style="text-align:center;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--muted);padding:4px 0;">${d}</div>`).join('');
+
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const today = new Date();
+
+  // Build set of dates with sessions
+  const sessionDates = {};
+  (state.sessionLog||[]).forEach(s => {
+    if (!sessionDates[s.date]) sessionDates[s.date] = [];
+    sessionDates[s.date].push(s);
+  });
+
+  gridEl.innerHTML = '';
+  // Empty cells before first day
+  for (let i=0;i<firstDay;i++) {
+    gridEl.innerHTML += `<div></div>`;
+  }
+  for (let d=1; d<=daysInMonth; d++) {
+    const dateKey = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const sessions = sessionDates[dateKey] || [];
+    const isToday = today.getFullYear()===calYear && today.getMonth()===calMonth && today.getDate()===d;
+    const hasSessions = sessions.length > 0;
+    const totalMs = sessions.reduce((a,s)=>a+s.ms,0);
+    const goalMs = (state.dailyGoalH||5)*3600000;
+    const metaReached = totalMs >= goalMs;
+    const avgRating = sessions.filter(s=>s.rating).reduce((sum,s,_,a)=>sum+(s.rating/a.length),0);
+
+    const cell = document.createElement('div');
+    cell.style.cssText = `
+      aspect-ratio:1;border-radius:10px;display:flex;flex-direction:column;align-items:center;
+      justify-content:center;cursor:${hasSessions?'pointer':'default'};position:relative;
+      border:1px solid ${isToday?'var(--accent)':hasSessions?'rgba(110,231,183,.2)':'var(--border)'};
+      background:${metaReached?'rgba(110,231,183,.12)':hasSessions?'rgba(129,140,248,.07)':'var(--surface)'};
+      transition:all .15s;`;
+    cell.innerHTML = `
+      <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:${isToday?'800':'600'};color:${isToday?'var(--accent)':hasSessions?'var(--text)':'var(--muted)'};">${d}</div>
+      ${hasSessions ? `<div style="font-size:9px;color:${metaReached?'var(--accent)':'var(--accent3)'};font-weight:700;margin-top:1px;">${swFormatShort(totalMs)}</div>` : ''}
+      ${avgRating ? `<div style="font-size:9px;color:var(--accent2);">★${avgRating.toFixed(1)}</div>` : ''}`;
+    if (hasSessions) {
+      cell.onmouseover = () => cell.style.background = metaReached ? 'rgba(110,231,183,.2)' : 'rgba(129,140,248,.14)';
+      cell.onmouseout  = () => cell.style.background = metaReached ? 'rgba(110,231,183,.12)' : 'rgba(129,140,248,.07)';
+      cell.onclick = () => renderCalDetail(dateKey, sessions);
+    }
+    gridEl.appendChild(cell);
+  }
+  detEl.innerHTML = '';
+}
+
+function renderCalDetail(dateKey, sessions) {
+  const detEl = document.getElementById('cal-detail');
+  const dateObj = new Date(dateKey+'T12:00:00');
+  const dateStr = dateObj.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const totalMs = sessions.reduce((a,s)=>a+s.ms,0);
+
+  detEl.innerHTML = `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+      <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;text-transform:capitalize;">${dateStr}</span>
+        <span style="font-family:'Syne',sans-serif;font-weight:800;color:var(--accent3);">${swFormatShort(totalMs)} total</span>
+      </div>
+      ${sessions.map(s => `
+        <div style="padding:12px 20px;border-bottom:1px solid var(--border);font-size:13px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:${s.topicsStudied||s.note?'8px':'0'}">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:8px;height:8px;border-radius:50%;background:${COLORS[s.subject]||'var(--muted)'}"></div>
+              <strong>${NAMES[s.subject]||s.subject||'—'}</strong>
+              <span style="color:var(--muted);">${s.time}</span>
+              <span style="color:var(--muted);">${swFormat(s.ms)}</span>
+            </div>
+            ${s.rating?`<span style="color:var(--accent2);font-weight:700;">★ ${s.rating}/10</span>`:''}
+          </div>
+          ${s.topicsStudied?.length ? `<div style="color:var(--muted);font-size:11px;">📚 ${s.topicsStudied.join(' · ')}</div>` : ''}
+          ${s.note ? `<div style="color:var(--muted);font-style:italic;font-size:12px;margin-top:4px;">"${s.note}"</div>` : ''}
+        </div>`).join('')}
+    </div>`;
+}
+
+// ─── EXPORTAR EXCEL ──────────────────────────────────
+function exportarExcel() {
+  if (typeof XLSX === 'undefined') { showToast('⏳ Carregando…'); return; }
+
+  const wb = XLSX.utils.book_new();
+
+  // Sheet 1: Sessões
+  const sessRows = [['Data','Hora','Matéria','Duração (min)','Nota','Tópicos Estudados','Anotação']];
+  (state.sessionLog||[]).forEach(s => {
+    sessRows.push([
+      s.date, s.time, NAMES[s.subject]||s.subject||'—',
+      Math.round(s.ms/60000),
+      s.rating||'', (s.topicsStudied||[]).join('; '), s.note||''
+    ]);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sessRows), 'Sessões');
+
+  // Sheet 2: Simulados
+  const simRows = [['Data','Banca','Matemática','Linguagens','C. Natureza','C. Humanas','Redação','Total','Observações']];
+  (state.simulados||[]).forEach(s => {
+    simRows.push([s.date, s.banca, s.scores.mat||'', s.scores.ling||'', s.scores.cien||'',
+      s.scores.hum||'', s.scores.red||'', s.scores.total||'', s.obs||'']);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(simRows), 'Simulados');
+
+  // Sheet 3: Checklist
+  const ckRows = [['Matéria','Tópico','Status','Concluído Em']];
+  Object.keys(state.topics).forEach(subj => {
+    state.topics[subj].forEach(t => {
+      ckRows.push([NAMES[subj]||subj, t.text, t.done?'Concluído':'Pendente', t.completedAt||'']);
+    });
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(ckRows), 'Checklist');
+
+  // Sheet 4: Horas por dia
+  const hrMap = {};
+  (state.sessionLog||[]).forEach(s => { hrMap[s.date]=(hrMap[s.date]||0)+s.ms; });
+  const hrRows = [['Data','Horas Estudadas','Meta Atingida']];
+  const goalH = state.dailyGoalH||5;
+  Object.keys(hrMap).sort().forEach(date => {
+    const h = hrMap[date]/3600000;
+    hrRows.push([date, h.toFixed(2), h>=goalH?'Sim':'Não']);
+  });
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(hrRows), 'Horas por Dia');
+
+  XLSX.writeFile(wb, `VestHub_${getTodayKey()}.xlsx`);
+  showToast('📊 Excel exportado!');
+}
+
+// ─── INIT ────────────────────────────────────────────
+// Always load the progress snapshot sent by the user — overrides any stale localStorage
+const _savedProgress = {"sessions":[{"id":1,"day":1,"subject":"mat","topic":"Matemática 1","time":"50min","done":false},{"id":2,"day":1,"subject":"mat","topic":"Questões/Flashcards","time":"40min","done":false},{"id":3,"day":1,"subject":"geo","topic":"Geografia 1","time":"50min","done":false},{"id":4,"day":1,"subject":"geo","topic":"Questões/Flashcards","time":"40min","done":false},{"id":5,"day":1,"subject":"fis","topic":"Física 1","time":"50min","done":false},{"id":6,"day":1,"subject":"fis","topic":"Questões/Flashcards","time":"40min","done":false},{"id":7,"day":1,"subject":"lit","topic":"Literatura","time":"50min","done":false},{"id":8,"day":1,"subject":"lit","topic":"Questões/Flashcards","time":"40min","done":false},{"id":9,"day":2,"subject":"fis","topic":"Física 2","time":"50min","done":false},{"id":10,"day":2,"subject":"fis","topic":"Questões/Flashcards","time":"40min","done":false},{"id":11,"day":2,"subject":"histger","topic":"História Geral","time":"50min","done":false},{"id":12,"day":2,"subject":"histger","topic":"Questões/Flashcards","time":"40min","done":false},{"id":13,"day":2,"subject":"mat","topic":"Matemática 2","time":"50min","done":false},{"id":14,"day":2,"subject":"mat","topic":"Questões/Flashcards","time":"40min","done":false},{"id":15,"day":2,"subject":"ling","topic":"Linguagens","time":"50min","done":false},{"id":16,"day":2,"subject":"ling","topic":"Questões/Flashcards","time":"40min","done":false},{"id":17,"day":3,"subject":"bio","topic":"Biologia 1","time":"50min","done":false},{"id":18,"day":3,"subject":"bio","topic":"Questões/Flashcards","time":"40min","done":false},{"id":19,"day":3,"subject":"histbr","topic":"História do Brasil","time":"50min","done":false},{"id":20,"day":3,"subject":"histbr","topic":"Questões/Flashcards","time":"40min","done":false},{"id":21,"day":3,"subject":"qui","topic":"Química 1","time":"50min","done":false},{"id":22,"day":3,"subject":"qui","topic":"Questões/Flashcards","time":"40min","done":false},{"id":23,"day":3,"subject":"geo","topic":"Geografia 2","time":"50min","done":false},{"id":24,"day":3,"subject":"geo","topic":"Questões/Flashcards","time":"40min","done":false},{"id":25,"day":4,"subject":"mat","topic":"Matemática 3","time":"50min","done":false},{"id":26,"day":4,"subject":"mat","topic":"Questões/Flashcards","time":"40min","done":false},{"id":27,"day":4,"subject":"fis","topic":"Física 3","time":"50min","done":false},{"id":28,"day":4,"subject":"fis","topic":"Questões/Flashcards","time":"40min","done":false},{"id":29,"day":4,"subject":"ling","topic":"Filosofia/Sociologia","time":"50min","done":false},{"id":30,"day":4,"subject":"ling","topic":"Questões/Flashcards","time":"40min","done":false},{"id":31,"day":4,"subject":"qui","topic":"Química 2","time":"50min","done":false},{"id":32,"day":4,"subject":"qui","topic":"Questões/Flashcards","time":"40min","done":false},{"id":33,"day":5,"subject":"bio","topic":"Biologia 2","time":"50min","done":true},{"id":34,"day":5,"subject":"bio","topic":"Questões/Flashcards","time":"40min","done":true},{"id":35,"day":5,"subject":"qui","topic":"Química 3","time":"50min","done":false},{"id":36,"day":5,"subject":"qui","topic":"Questões/Flashcards","time":"40min","done":false},{"id":37,"day":5,"subject":"bio","topic":"Biologia 3","time":"50min","done":false},{"id":38,"day":5,"subject":"bio","topic":"Questões/Flashcards","time":"40min","done":false},{"id":39,"day":6,"subject":"ling","topic":"Atualidades","time":"50min","done":false},{"id":40,"day":6,"subject":"ling","topic":"Redação","time":"50min","done":false},{"id":41,"day":6,"subject":"ling","topic":"Redação (2ª sessão)","time":"40min","done":false}],"topics":{"mat":[{"id":"m_conj","text":"Teoria dos Conjuntos","done":true},{"id":"m_porc","text":"Porcentagem","done":true},{"id":"m_disc","text":"Questões Discursivas","done":true},{"id":"m_func1","text":"Funções do 1º grau","done":false},{"id":"m_func2","text":"Funções do 2º grau","done":false},{"id":"m_trig","text":"Trigonometria","done":false},{"id":"m_geop","text":"Geometria Plana","done":true},{"id":"m_prob","text":"Probabilidade","done":false},{"id":"m_stat","text":"Estatística","done":false},{"id":"mat1772749804874","text":"Operações com intervalos reais","done":false},{"id":"mat1772749815391","text":"Potenciação","done":true},{"id":"mat1772749820187","text":"Radiciação","done":true},{"id":"mat1772749833389","text":"Equações do 1° Grau","done":true},{"id":"mat1772749856109","text":"Equações do 2° Grau","done":true},{"id":"mat1772749874890","text":"Relações, funções e definições","done":false},{"id":"mat1772749906973","text":"Produtos Notáveis e Fatoração","done":true},{"id":"mat1772749917495","text":"M.M.C e M.D.C","done":true},{"id":"mat1772749954516","text":"Razão, Proporção e Grandezas Proporcionais","done":true},{"id":"mat1772749993211","text":"Acréscimos e Descontos","done":false},{"id":"mat1772750000603","text":"Juros Simples e Compostos","done":false},{"id":"mat1772750044532","text":"Ângulos no Triângulo","done":true},{"id":"mat1772750052244","text":"Circunferência","done":true},{"id":"mat1772750064382","text":"Produtos Notáveis no Triângulo","done":false},{"id":"mat1772750078954","text":"Teorema de Tales e Semelhança","done":false},{"id":"mat1772750093881","text":"Relações Métricas no Triângulo Retângulo","done":false},{"id":"mat1772750111517","text":"Trigonometria em um Triângulo Retângulo","done":false}],"ling":[{"id":"l_ling","text":"Linguagens (aula)","done":true},{"id":"l_interp","text":"Interpretação de Texto","done":false},{"id":"l_gram","text":"Gramática — Concordância","done":false},{"id":"l_fig","text":"Figuras de Linguagem","done":false},{"id":"l_red","text":"Redação Dissertativa","done":false},{"id":"l_var","text":"Variação Linguística","done":false},{"id":"l_filsoc","text":"Filosofia/Sociologia","done":false},{"id":"l_atual","text":"Atualidades","done":false},{"id":"ling1772750932087","text":"Tipologias Textuais","done":true},{"id":"ling1772750957672","text":"Funções da Linguagem","done":false},{"id":"ling1772750977575","text":"Norma-Padrão e Variação Linguística","done":false},{"id":"ling1772750986113","text":"Semântica","done":false},{"id":"ling1772751004143","text":"Estudo de Verbos I: Tempos e Modos","done":false},{"id":"ling1772751015828","text":"Estudo de Verbos II: Vozes Verbais","done":false},{"id":"ling1772751029146","text":"Estudo de Verbos III: Discurso","done":false}],"lit":[{"id":"lt_lit","text":"Literatura (aula geral)","done":true},{"id":"lt_trov","text":"Trovadorismo e Humanismo","done":true},{"id":"lt_clas","text":"Classicismo","done":false},{"id":"lt_bar","text":"Barroco e Arcadismo","done":false},{"id":"lt_rom","text":"Romantismo","done":false},{"id":"lt_real","text":"Realismo e Naturalismo","done":false},{"id":"lt_mod","text":"Modernismo","done":false},{"id":"lit1772751070752","text":"A Arte Literária e o Estudo dos Gêneros","done":false},{"id":"lit1772751084337","text":"Quinhentismo e Barroco","done":false},{"id":"lit1772751105182","text":"Gregório de Matos e Padre Antônio Vieira","done":false},{"id":"lit1772751110162","text":"Arcadismo","done":false},{"id":"lit1772751117049","text":"Romantismo em Portugal","done":false}],"bio":[{"id":"b_deolho","text":"De Olho no Enem — Biologia","done":true},{"id":"b_eco","text":"Introdução à Ecologia e Relações Tróficas","done":true},{"id":"b_cito","text":"Citologia","done":false},{"id":"b_gen","text":"Genética","done":false},{"id":"b_evol","text":"Evolução","done":false},{"id":"b_fisiol","text":"Fisiologia Humana","done":false},{"id":"bio1772751840718","text":"Origem da Vida","done":true},{"id":"bio1772751849078","text":"Evidências Evolutivas","done":true},{"id":"bio1772751856526","text":"Teorias Evolutivas","done":true},{"id":"bio1772751862964","text":"Especiação","done":true},{"id":"bio1772751880056","text":"Relações Ecológicas","done":false},{"id":"bio1772751893138","text":"Ecologia de Populações e Sucessão Ecológica","done":false},{"id":"bio1772751917111","text":"Taxonomia e Sistemática Filogenética","done":true},{"id":"bio1772751921713","text":"Protistas","done":true},{"id":"bio1772751929008","text":"Protozooses","done":true},{"id":"bio1772751935780","text":"Embriologia I","done":true},{"id":"bio1772751946341","text":"Embriologia II","done":false},{"id":"bio1772751961001","text":"Reino Animalia I - Porífera e Cnidária","done":false},{"id":"bio1772753179805","text":"Reino Animalia II - Platelmintos e Verminoses","done":false},{"id":"bio1772753234024","text":"Composição Química Celular I - Compostos Inorgânicos","done":true},{"id":"bio1772753261068","text":"Composição Química Celular II - Compostos Orgânicos I","done":true},{"id":"bio1772753292516","text":"Composição Química Celular II - Compostos Orgânicos II","done":true,"completedAt":"2026-03-06"},{"id":"bio1772753305971","text":"Citologia - Modelos Celulares","done":false},{"id":"bio1772753314351","text":"Citologia - Membranas","done":false},{"id":"bio1772753343799","text":"Citologia - Organelas Citoplasmáticas","done":false},{"id":"bio1772753358473","text":"Citologia - Metabolismo Energértico I","done":false}],"qui":[{"id":"q_deolho","text":"De Olho no Enem — Química","done":true},{"id":"q_hidro","text":"Hidrocarbonetos I","done":true},{"id":"q_reac","text":"Reações Químicas","done":false},{"id":"q_org","text":"Química Orgânica","done":false},{"id":"q_termo","text":"Termoquímica","done":false},{"id":"q_equil","text":"Equilíbrio Químico","done":false},{"id":"q_elet","text":"Eletroquímica","done":false},{"id":"qui1772751526355","text":"Propriedades e Estado Físico da Matéria","done":true},{"id":"qui1772751542478","text":"Métodos de Separação de Misturas I","done":true},{"id":"qui1772751552132","text":"Métodos de Separação de Misturas II","done":true},{"id":"qui1772751562751","text":"Métodos de Separação de Misturas III","done":false},{"id":"qui1772751576231","text":"Modelos Atômicos","done":true},{"id":"qui1772751597367","text":"Atomística","done":false},{"id":"qui1772751612675","text":"Classificação Periódica dos Elementos","done":false},{"id":"qui1772751632526","text":"Propriedades Periódicas e Aperiódicas","done":false},{"id":"qui1772751658365","text":"Relações Numéricas","done":true},{"id":"qui1772751667360","text":"Estudo dos Gases","done":true},{"id":"qui1772751678147","text":"Cálculo de Fórmulas","done":true},{"id":"qui1772751688485","text":"Leis Ponderais","done":false},{"id":"qui1772751698543","text":"Estequiometria Simples","done":false},{"id":"qui1772751715167","text":"Estequiometria: Pureza e Rendimento","done":false},{"id":"qui1772751737228","text":"Estequiometria: Reagente Limitante e Excesso","done":false},{"id":"qui1772751753022","text":"Estudo do Carbono","done":true},{"id":"qui1772751766254","text":"Fórmulas na Química Orgânica","done":true},{"id":"qui1772751783397","text":"Classificação das Cadeias Carbônicas","done":true},{"id":"qui1772751794141","text":"Hidrocarbonetos II","done":false},{"id":"qui1772751803522","text":"Funções Oxigenadas I","done":false},{"id":"qui1772751810650","text":"Funções Oxigenadas II","done":false}],"fis":[{"id":"f_un","text":"Física — Revisão UN","done":true},{"id":"f_campo","text":"Campo Elétrico","done":true},{"id":"f_newt","text":"Leis de Newton","done":false},{"id":"f_termo","text":"Termodinâmica","done":false},{"id":"f_otica","text":"Óptica","done":false},{"id":"f_eletmag","text":"Eletromagnetismo","done":false},{"id":"f_ond","text":"Ondulatória","done":false},{"id":"fis1772751230382","text":"Fundamentos da Cinemática Escalar","done":true},{"id":"fis1772751237430","text":"Movimento Uniforme","done":true},{"id":"fis1772751252745","text":"Movimento Uniformemente Variado","done":true},{"id":"fis1772751277301","text":"Queda Livre e Lançamento Vertical","done":true},{"id":"fis1772751291262","text":"Lançamentos Horizontal e Oblíquo","done":true},{"id":"fis1772751302591","text":"Cinemática Vetorial","done":false},{"id":"fis1772751311330","text":"Movimento Circular","done":false},{"id":"fis1772751330183","text":"Grandezas Físicas","done":true},{"id":"fis1772751339609","text":"Temperatura e Calor","done":true},{"id":"fis1772751354008","text":"Calor Sensível","done":true},{"id":"fis1772751367159","text":"Mudanças de Estado Físico","done":true},{"id":"fis1772751380751","text":"Transmissão de Calor","done":false},{"id":"fis1772751388474","text":"Dilatação Térmica","done":false},{"id":"fis1772751392017","text":"Gases","done":false},{"id":"fis1772751418950","text":"Vetores","done":true},{"id":"fis1772751430904","text":"Princípios da Eletrostática","done":true},{"id":"fis1772751437630","text":"Lei de Coulumb","done":true},{"id":"fis1772751459985","text":"Energia Potencial e Potencial Elétrico","done":false},{"id":"fis1772751477503","text":"Trabalho da Força Elétrica","done":false},{"id":"fis1772751490652","text":"Campo Elétrico Uniforme (CEU)","done":false}],"histbr":[{"id":"hb_exp","text":"Expansão Territorial e Mineração","done":true},{"id":"hb_aula","text":"História do Brasil (aula)","done":true},{"id":"hb_col","text":"Brasil Colônia","done":false},{"id":"hb_imp","text":"Independência e Império","done":false},{"id":"hb_var","text":"Era Vargas","done":false},{"id":"hb_dit","text":"Ditadura Militar","done":false},{"id":"hb_red","text":"Redemocratização","done":false},{"id":"histbr1772750172623","text":"Formação de Portugal e Navegações Ultramarinas","done":true},{"id":"histbr1772750189236","text":"Início da Colinização na América","done":true},{"id":"histbr1772750219537","text":"Economia Colonial e o Processo de Escravização","done":true},{"id":"histbr1772750236369","text":"União Ibérica e as Invasões Estrangeiras","done":true},{"id":"histbr1772750250427","text":"Expansão Territorial e Mineração","done":true},{"id":"histbr1772750273495","text":"Revoltas Nativistas e Emancipacionistas","done":false},{"id":"histbr1772750280042","text":"Período Joanino","done":false}],"histger":[{"id":"hg_roma","text":"Roma Antiga — Império","done":true},{"id":"hg_germ","text":"Reinos Germânicos e Alta Idade Média","done":true},{"id":"hg_rev","text":"Revoluções Francesa e Industrial","done":false},{"id":"hg_imper","text":"Imperialismo e 1ª Guerra","done":false},{"id":"hg_2gm","text":"2ª Guerra Mundial","done":false},{"id":"hg_fria","text":"Guerra Fria","done":false},{"id":"hg_glob","text":"Globalização","done":false},{"id":"histger1772750345971","text":"Antiguidade Oriental","done":true},{"id":"histger1772750356793","text":"Civilização Grega","done":true},{"id":"histger1772750385819","text":"Roma Antiga - Monarquia e República","done":true},{"id":"histger1772750412254","text":"Medievo - Expansão Islâmica e Baixa Idade Média","done":false},{"id":"histger1772750428732","text":"Renascimentos Cultural e Científico","done":false}],"geo":[{"id":"g_elem","text":"Elementos e Fatores Climáticos","done":true},{"id":"g_nova","text":"Nova Ordem Mundial","done":true},{"id":"g_geo3","text":"Geopolítica Mundial","done":false},{"id":"g_urb","text":"Urbanização","done":false},{"id":"g_bra","text":"Geopolítica Brasileira","done":false},{"id":"geo1772750459913","text":"Movimentos da Terra","done":true},{"id":"geo1772750469911","text":"Coordenadas Geográficas","done":true},{"id":"geo1772750512492","text":"Noções de Cartografia","done":true},{"id":"geo1772750530354","text":"Dinâmicas Climáticas","done":false},{"id":"geo1772750539846","text":"Climas do Brasil e do Mundo","done":false},{"id":"geo1772750544447","text":"Hidrologia","done":false},{"id":"geo1772750566634","text":"História do Pensamento Geográfico","done":false},{"id":"geo1772750575442","text":"Ordem da Guerra Fria","done":false},{"id":"geo1772750598691","text":"Globalização","done":false},{"id":"geo1772750611565","text":"Blocos Econômicos","done":false},{"id":"geo1772750620214","text":"Comércio Internacional","done":false},{"id":"geo1772750632020","text":"População - Conceitos e Transição","done":false}],"ing":[{"id":"i1","text":"Simple Past / Present Perfect","done":false},{"id":"i2","text":"Phrasal Verbs","done":false},{"id":"i3","text":"Vocabulário Temático","done":false}],"socfil":[{"id":"sf1","text":"O que é Filosofia?","done":false},{"id":"sf2","text":"Filosofia Antiga — Sócrates, Platão, Aristóteles","done":false},{"id":"sf3","text":"Filosofia Moderna — Iluminismo","done":false},{"id":"sf4","text":"O que é Sociologia?","done":false},{"id":"sf5","text":"Sociologia Clássica — Durkheim, Weber, Marx","done":false},{"id":"sf6","text":"Cidadania e Direitos Humanos","done":false},{"id":"sf7","text":"Cultura, Indústria Cultural e Meios de Comunicação","done":false}],"arte":[{"id":"ar1","text":"História da Arte — Pré-história ao Renascimento","done":false},{"id":"ar2","text":"Arte Barroca e Neoclássica","done":false},{"id":"ar3","text":"Arte Moderna e Vanguardas","done":false},{"id":"ar4","text":"Arte Contemporânea","done":false},{"id":"ar5","text":"Arte Brasileira","done":false},{"id":"ar6","text":"Linguagens Artísticas: Teatro, Dança, Música","done":false}]},"pomCount":0,"pomMins":0,"nextId":300,"customSubjects":[],"badges":["topics_10","topics_50","first_session"],"sessionLog":[{"id":1772819900515,"date":"2026-03-06","time":"14:58","ms":5299374,"subject":"bio","rating":7,"note":"Matéria boa dentro da Biologia, talvez precise fazer mais questões."},{"id":1772826688048,"date":"2026-03-06","time":"16:51","ms":6612374,"subject":"qui","rating":9,"note":"Aula importante de base para muitos cálculos que caem na prova de Química."}]};
+// Force-write the snapshot into localStorage so load() picks it up fresh
+localStorage.setItem('vesthub', JSON.stringify(_savedProgress));
+load();
+// Restore any custom subjects into the session modal select
+if (state.customSubjects) {
+  state.customSubjects.forEach(cs => {
+    COLORS[cs.key] = cs.color;
+    NAMES[cs.key]  = cs.name;
+    if (!state.topics[cs.key]) state.topics[cs.key] = [];
+    const opt = document.createElement('option');
+    opt.value = cs.key; opt.textContent = cs.name;
+    document.getElementById('m-subject').appendChild(opt);
+  });
+}
+renderDashboard();
+renderCronograma();
+renderChecklist();
+updateSidebar();
+updateGoalBar();
+populateSwSubjects();
+checkConquistas();
+document.getElementById('pom-count').textContent = state.pomCount;
+document.getElementById('pom-mins').textContent = state.pomMins;
+</script>
+</body>
+</html>
